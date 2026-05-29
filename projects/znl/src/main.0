@@ -1,0 +1,31 @@
+// znl - number each argument-line.
+//
+// Modeled on coreutils `nl`. Each argument is one line (this backend has
+// no stdin/file runtime). Prints "<n>\t<line>" with n starting at 1.
+//
+//   znl a b
+//   1	a
+//   2	b
+use lib
+
+pub fn main(world: World) -> Void raises {
+    let argc: usize = std.args.len()
+    if argc < 2 {
+        check world.err.write("usage: znl line...\n")
+        return
+    }
+    var i: usize = 1
+    var lineno: u32 = 1_u32
+    while i < argc {
+        let av: Maybe<String> = std.args.get(i)
+        if av.has {
+            var nbuf: [10]u8 = [0; 10]
+            check world.out.write(fmt_u32(nbuf, lineno))
+            check world.out.write("\t")
+            check world.out.write(av.value)
+            check world.out.write("\n")
+            lineno = next_line_no(lineno)
+        }
+        i = i + 1
+    }
+}

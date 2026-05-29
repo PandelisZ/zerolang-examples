@@ -1,0 +1,136 @@
+// zgcdlcm core logic.
+//
+// gcd / lcm are recursive and unit-tested by `zero test`.
+// fmt_u32 / is_all_digits / parse_u32 use while/std and are validated by
+// `zero check` and `zero run`.
+
+// Decimal formatting: write `value` as ASCII digits into `buf`.
+pub fn fmt_u32(buf: MutSpan<u8>, value: u32) -> Span<u8> {
+    if value == 0 {
+        buf[0] = 48
+        return buf[0..1]
+    }
+    var n: u32 = value
+    var tmp: [10]u8 = [0; 10]
+    var count: usize = 0
+    while n > 0 {
+        tmp[count] = 48 + ((n % 10) as u8)
+        n = n / 10
+        count = count + 1
+    }
+    var i: usize = 0
+    while i < count {
+        buf[i] = tmp[count - 1 - i]
+        i = i + 1
+    }
+    return buf[0..count]
+}
+
+// True when every byte of `s` is an ASCII digit and `s` is non-empty.
+pub fn is_all_digits(s: Span<u8>) -> Bool {
+    let n: usize = std.mem.len(s)
+    if n == 0 {
+        return false
+    }
+    var i: usize = 0
+    while i < n {
+        let c: u8 = s[i]
+        if c < 48 || c > 57 {
+            return false
+        }
+        i = i + 1
+    }
+    return true
+}
+
+// Parse a decimal byte span into u32. Caller must check is_all_digits first.
+pub fn parse_u32(s: Span<u8>) -> u32 {
+    let n: usize = std.mem.len(s)
+    var i: usize = 0
+    var acc: u32 = 0
+    while i < n {
+        acc = acc * 10 + ((s[i] - 48) as u32)
+        i = i + 1
+    }
+    return acc
+}
+
+// Greatest common divisor via Euclidean algorithm.
+pub fn gcd(a: u32, b: u32) -> u32 {
+    if b == 0 {
+        return a
+    }
+    return gcd(b, a % b)
+}
+
+// Least common multiple: lcm(a,b) = a/gcd(a,b) * b (division first avoids overflow).
+pub fn lcm(a: u32, b: u32) -> u32 {
+    if a == 0 || b == 0 {
+        return 0
+    }
+    return (a / gcd(a, b)) * b
+}
+
+// ---- gcd tests ----
+
+test "gcd: gcd(0, 0) = 0" {
+    expect gcd(0_u32, 0_u32) == 0_u32
+}
+
+test "gcd: gcd(12, 0) = 12" {
+    expect gcd(12_u32, 0_u32) == 12_u32
+}
+
+test "gcd: gcd(0, 7) = 7" {
+    expect gcd(0_u32, 7_u32) == 7_u32
+}
+
+test "gcd: gcd(12, 8) = 4" {
+    expect gcd(12_u32, 8_u32) == 4_u32
+}
+
+test "gcd: gcd(100, 75) = 25" {
+    expect gcd(100_u32, 75_u32) == 25_u32
+}
+
+test "gcd: gcd of coprimes = 1" {
+    expect gcd(13_u32, 7_u32) == 1_u32
+}
+
+test "gcd: gcd(48, 18) = 6" {
+    expect gcd(48_u32, 18_u32) == 6_u32
+}
+
+test "gcd: gcd(12, 18) = 6" {
+    expect gcd(12_u32, 18_u32) == 6_u32
+}
+
+// ---- lcm tests ----
+
+test "lcm: lcm(0, 5) = 0" {
+    expect lcm(0_u32, 5_u32) == 0_u32
+}
+
+test "lcm: lcm(3, 4) = 12" {
+    expect lcm(3_u32, 4_u32) == 12_u32
+}
+
+test "lcm: lcm(12, 18) = 36" {
+    expect lcm(12_u32, 18_u32) == 36_u32
+}
+
+test "lcm: lcm(6, 4) = 12" {
+    expect lcm(6_u32, 4_u32) == 12_u32
+}
+
+test "lcm: lcm(7, 11) = 77" {
+    expect lcm(7_u32, 11_u32) == 77_u32
+}
+
+test "lcm: lcm(4, 4) = 4" {
+    expect lcm(4_u32, 4_u32) == 4_u32
+}
+
+test "lcm: lcm(1, 100) = 100" {
+    expect lcm(1_u32, 100_u32) == 100_u32
+}

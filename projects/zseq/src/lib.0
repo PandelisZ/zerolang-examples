@@ -1,0 +1,111 @@
+// zseq core logic.
+//
+// count_in_range is recursive and unit-tested by `zero test`.
+// fmt_u32 / is_all_digits / parse_u32 use while/std and are validated by
+// `zero check` and `zero run`.
+
+// Decimal formatting: write `value` as ASCII digits into `buf`.
+pub fn fmt_u32(buf: MutSpan<u8>, value: u32) -> Span<u8> {
+    if value == 0 {
+        buf[0] = 48
+        return buf[0..1]
+    }
+    var n: u32 = value
+    var tmp: [10]u8 = [0; 10]
+    var count: usize = 0
+    while n > 0 {
+        tmp[count] = 48 + ((n % 10) as u8)
+        n = n / 10
+        count = count + 1
+    }
+    var i: usize = 0
+    while i < count {
+        buf[i] = tmp[count - 1 - i]
+        i = i + 1
+    }
+    return buf[0..count]
+}
+
+// True when every byte of `s` is an ASCII digit and `s` is non-empty.
+pub fn is_all_digits(s: Span<u8>) -> Bool {
+    let n: usize = std.mem.len(s)
+    if n == 0 {
+        return false
+    }
+    var i: usize = 0
+    while i < n {
+        let c: u8 = s[i]
+        if c < 48 || c > 57 {
+            return false
+        }
+        i = i + 1
+    }
+    return true
+}
+
+// Parse a decimal byte span into u32. Caller must check is_all_digits first.
+pub fn parse_u32(s: Span<u8>) -> u32 {
+    let n: usize = std.mem.len(s)
+    var i: usize = 0
+    var acc: u32 = 0
+    while i < n {
+        acc = acc * 10 + ((s[i] - 48) as u32)
+        i = i + 1
+    }
+    return acc
+}
+
+// Count terms in the sequence start, start+step, ..., up to end (inclusive).
+// Requires step >= 1. Returns 0 when start > end.
+pub fn count_in_range(start: u32, end: u32, step: u32) -> u32 {
+    if start > end {
+        return 0
+    }
+    return 1 + count_in_range(start + step, end, step)
+}
+
+// ---- count_in_range tests ----
+
+test "count_in_range: start > end returns 0" {
+    expect count_in_range(5_u32, 3_u32, 1_u32) == 0_u32
+}
+
+test "count_in_range: start == end returns 1" {
+    expect count_in_range(5_u32, 5_u32, 1_u32) == 1_u32
+}
+
+test "count_in_range: 1 to 4 step 1 = 4" {
+    expect count_in_range(1_u32, 4_u32, 1_u32) == 4_u32
+}
+
+test "count_in_range: 2 to 6 step 2 = 3" {
+    expect count_in_range(2_u32, 6_u32, 2_u32) == 3_u32
+}
+
+test "count_in_range: 0 to 10 step 1 = 11" {
+    expect count_in_range(0_u32, 10_u32, 1_u32) == 11_u32
+}
+
+test "count_in_range: 0 to 9 step 3 = 4" {
+    expect count_in_range(0_u32, 9_u32, 3_u32) == 4_u32
+}
+
+test "count_in_range: 1 to 1 step 5 = 1" {
+    expect count_in_range(1_u32, 1_u32, 5_u32) == 1_u32
+}
+
+test "count_in_range: 5 to 15 step 5 = 3" {
+    expect count_in_range(5_u32, 15_u32, 5_u32) == 3_u32
+}
+
+test "count_in_range: 10 to 20 step 3 = 4" {
+    expect count_in_range(10_u32, 20_u32, 3_u32) == 4_u32
+}
+
+test "count_in_range: step larger than range = 1" {
+    expect count_in_range(1_u32, 3_u32, 10_u32) == 1_u32
+}
+
+test "count_in_range: 0 to 0 step 1 = 1" {
+    expect count_in_range(0_u32, 0_u32, 1_u32) == 1_u32
+}

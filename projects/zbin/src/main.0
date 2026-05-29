@@ -1,0 +1,61 @@
+// zbin - print the binary representation of each numeric argument.
+//
+// No leading zeros. 0 is printed as "0".
+//
+//   zbin 5
+//   101
+//
+//   zbin 0 7 8
+//   0
+//   111
+//   1000
+use lib
+
+pub fn main(world: World) -> Void raises {
+    let argc: usize = std.args.len()
+    if argc < 2 {
+        check world.err.write("usage: zbin <number>...\n")
+        return
+    }
+    var out: [256]u8 = [0; 256]
+    var i: usize = 1
+    while i < argc {
+        let arg: Maybe<String> = std.args.get(i)
+        if arg.has {
+            let s: Span<u8> = std.mem.span(arg.value)
+            if is_all_digits(s) {
+                let value: u32 = parse_u32(s)
+                if value == 0 {
+                    out[0] = 48
+                    out[1] = 10
+                    check world.out.write(out[0..2])
+                } else {
+                    // Build binary digits LSB-first into tmp, then reverse into out.
+                    var tmp: [32]u8 = [0; 32]
+                    var num: u32 = value
+                    var cnt: u32 = 0
+                    while num > 0 {
+                        tmp[cnt as usize] = 48 + ((num % 2) as u8)
+                        cnt = cnt + 1
+                        num = num / 2
+                    }
+                    var pos: usize = 0
+                    var k: u32 = cnt
+                    while k > 0 {
+                        out[pos] = tmp[(k - 1) as usize]
+                        pos = pos + 1
+                        k = k - 1
+                    }
+                    out[pos] = 10
+                    pos = pos + 1
+                    check world.out.write(out[0..pos])
+                }
+            } else {
+                check world.err.write("zbin: not a number: ")
+                check world.err.write(arg.value)
+                check world.err.write("\n")
+            }
+        }
+        i = i + 1
+    }
+}

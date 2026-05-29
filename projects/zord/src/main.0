@@ -1,0 +1,30 @@
+// zord - print the decimal ASCII code of the first byte of each argument.
+//
+//   zord A b     -> 65\n98
+//   zord !       -> 33
+use lib
+
+pub fn main(world: World) -> Void raises {
+    let argc: usize = std.args.len()
+    if argc < 2 {
+        check world.err.write("usage: zord <char>...\n")
+        return
+    }
+
+    var idx: usize = 1
+    while idx < argc {
+        let oa: Maybe<String> = std.args.get(idx)
+        if oa.has {
+            let text: Span<u8> = std.mem.span(oa.value)
+            let tlen: usize = std.mem.len(text)
+            if tlen > 0 {
+                let first: u8 = text[0]
+                let code: u32 = first as u32
+                var obuf: [10]u8 = [0; 10]
+                check world.out.write(fmt_u32(obuf, code))
+                check world.out.write("\n")
+            }
+        }
+        idx = idx + 1
+    }
+}

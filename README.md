@@ -1,6 +1,6 @@
 # zerolang-examples
 
-A corpus of ten small-to-medium CLI tools written in
+A corpus of twenty-six small-to-medium CLI tools written in
 [zerolang](https://github.com/vercel-labs/zerolang), each modeled on a familiar
 open-source utility. The goal is a **diverse, realistic, editable base** of
 zerolang programs to run editing experiments on top of — teaching/evaluating
@@ -42,6 +42,22 @@ yet, input is passed as arguments (each argument is one "line").
 | `zfactor` | factor      | prime factorization via trial division         | `zero run projects/zfactor -- 360` |
 | `zuniq`   | uniq        | collapse adjacent duplicates, `-c -d`          | `zero run projects/zuniq -- -c a a b c c` |
 | `zstats`  | datamash/st | count/sum/min/max/mean/median over numbers     | `zero run projects/zstats -- 4 8 15 16 23 42` |
+| `zhead`   | head        | first N argument-lines, `-n`                   | `zero run projects/zhead -- -n 2 a b c` |
+| `ztail`   | tail        | last N argument-lines, `-n`                    | `zero run projects/ztail -- -n 2 a b c` |
+| `znl`     | nl          | number each line                               | `zero run projects/znl -- a b` |
+| `ztac`    | tac         | reverse line order                             | `zero run projects/ztac -- a b c` |
+| `zrev`    | rev         | reverse characters in each line                | `zero run projects/zrev -- abc` |
+| `zcaesar` | caesar      | Caesar-shift letters by N                       | `zero run projects/zcaesar -- 3 abc` |
+| `ztitle`  | —           | Title-Case Each Word                           | `zero run projects/ztitle -- "hello world"` |
+| `zord`    | —           | ASCII code of each arg's first byte            | `zero run projects/zord -- A b` |
+| `zseq`    | seq         | integer sequence start..end[ step]             | `zero run projects/zseq -- 1 4` |
+| `zsqrt`   | —           | integer floor square root                      | `zero run projects/zsqrt -- 17` |
+| `zgcdlcm` | —           | gcd and lcm of two integers                    | `zero run projects/zgcdlcm -- 12 18` |
+| `zcollatz`| —           | Collatz sequence from n to 1                   | `zero run projects/zcollatz -- 6` |
+| `zhexdump`| xxd         | lowercase hex of each arg's bytes              | `zero run projects/zhexdump -- AB` |
+| `zbin`    | —           | binary digits of each number                   | `zero run projects/zbin -- 5` |
+| `zpalindrome` | —       | yes/no palindrome per argument                 | `zero run projects/zpalindrome -- racecar abc` |
+| `zyes`    | yes         | repeat text N times, `-n`                      | `zero run projects/zyes -- -n 3 hi` |
 
 ## Layout
 

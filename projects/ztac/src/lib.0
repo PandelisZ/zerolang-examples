@@ -1,0 +1,54 @@
+// ztac core logic.
+//
+// mirror_index is pure, branch-only, cast-free — unit-testable by `zero test`.
+
+// Given forward index i in a list of n items, return the corresponding
+// reverse index (n-1-i). Returns 0 when i is out of range.
+pub fn mirror_index(i: u32, n: u32) -> u32 {
+    if i >= n {
+        return 0_u32
+    }
+    return n - 1_u32 - i
+}
+
+// ---- mirror_index tests ----
+
+test "mirror_index: i=0 n=1 -> 0 (single element)" {
+    expect mirror_index(0_u32, 1_u32) == 0_u32
+}
+
+test "mirror_index: i=0 n=3 -> 2 (first becomes last)" {
+    expect mirror_index(0_u32, 3_u32) == 2_u32
+}
+
+test "mirror_index: i=1 n=3 -> 1 (middle stays middle)" {
+    expect mirror_index(1_u32, 3_u32) == 1_u32
+}
+
+test "mirror_index: i=2 n=3 -> 0 (last becomes first)" {
+    expect mirror_index(2_u32, 3_u32) == 0_u32
+}
+
+test "mirror_index: i=0 n=5 -> 4" {
+    expect mirror_index(0_u32, 5_u32) == 4_u32
+}
+
+test "mirror_index: i=4 n=5 -> 0" {
+    expect mirror_index(4_u32, 5_u32) == 0_u32
+}
+
+test "mirror_index: i=2 n=5 -> 2 (centre of 5)" {
+    expect mirror_index(2_u32, 5_u32) == 2_u32
+}
+
+test "mirror_index: i=3 n=4 -> 0" {
+    expect mirror_index(3_u32, 4_u32) == 0_u32
+}
+
+test "mirror_index: i=0 n=4 -> 3" {
+    expect mirror_index(0_u32, 4_u32) == 3_u32
+}
+
+test "mirror_index: out-of-range i=5 n=3 -> 0 (guard)" {
+    expect mirror_index(5_u32, 3_u32) == 0_u32
+}

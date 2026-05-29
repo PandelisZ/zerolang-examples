@@ -1,0 +1,29 @@
+// ztac - print argument-lines in reverse order.
+//
+// Modeled on coreutils `tac`. Each argument is one line (this backend has
+// no stdin/file runtime). Prints lines last-to-first.
+//
+//   ztac a b c
+//   c
+//   b
+//   a
+use lib
+
+pub fn main(world: World) -> Void raises {
+    let argc: usize = std.args.len()
+    if argc < 2 {
+        check world.err.write("usage: ztac line...\n")
+        return
+    }
+    let data_count: usize = argc - 1
+    var i: usize = 0
+    while i < data_count {
+        let ri: usize = mirror_index(i as u32, data_count as u32) as usize
+        let av: Maybe<String> = std.args.get(1 + ri)
+        if av.has {
+            check world.out.write(av.value)
+            check world.out.write("\n")
+        }
+        i = i + 1
+    }
+}

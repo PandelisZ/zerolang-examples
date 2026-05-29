@@ -1,0 +1,111 @@
+// zpalindrome core logic.
+//
+// is_num_palindrome: check whether the decimal representation of n reads the
+// same forwards and backwards.  Implemented recursively without `while`, span
+// indexing, or `as` casts so it can be unit-tested by `zero test`.
+
+// Number of decimal digits in n (1 for n == 0).
+pub fn num_digits(n: u32) -> u32 {
+    if n < 10 {
+        return 1
+    }
+    return 1 + num_digits(n / 10)
+}
+
+// 10^exp (recursive).
+pub fn pow10(exp: u32) -> u32 {
+    if exp == 0 {
+        return 1
+    }
+    return 10 * pow10(exp - 1)
+}
+
+// Recursive palindrome check given the number and its current digit count.
+fn check_pal(n: u32, nd: u32) -> Bool {
+    if nd <= 1 {
+        return true
+    }
+    let p: u32 = pow10(nd - 1)
+    let first: u32 = n / p
+    let last: u32 = n % 10
+    if first != last {
+        return false
+    }
+    let mid: u32 = (n % p) / 10
+    return check_pal(mid, nd - 2)
+}
+
+pub fn is_num_palindrome(n: u32) -> Bool {
+    return check_pal(n, num_digits(n))
+}
+
+// is_all_digits / parse_u32 for argv (while-based; check/run validated).
+
+pub fn is_all_digits(s: Span<u8>) -> Bool {
+    let n: usize = std.mem.len(s)
+    if n == 0 {
+        return false
+    }
+    var i: usize = 0
+    while i < n {
+        let c: u8 = s[i]
+        if c < 48 || c > 57 {
+            return false
+        }
+        i = i + 1
+    }
+    return true
+}
+
+pub fn parse_u32(s: Span<u8>) -> u32 {
+    let n: usize = std.mem.len(s)
+    var i: usize = 0
+    var acc: u32 = 0
+    while i < n {
+        acc = acc * 10 + ((s[i] - 48) as u32)
+        i = i + 1
+    }
+    return acc
+}
+
+// ── is_num_palindrome tests (8+) ──────────────────────────────────────────────
+
+test "is_num_palindrome: 0 is palindrome" {
+    expect is_num_palindrome(0_u32)
+}
+
+test "is_num_palindrome: 1 is palindrome" {
+    expect is_num_palindrome(1_u32)
+}
+
+test "is_num_palindrome: 11 is palindrome" {
+    expect is_num_palindrome(11_u32)
+}
+
+test "is_num_palindrome: 121 is palindrome" {
+    expect is_num_palindrome(121_u32)
+}
+
+test "is_num_palindrome: 123 is not palindrome" {
+    expect is_num_palindrome(123_u32) == false
+}
+
+test "is_num_palindrome: 1221 is palindrome" {
+    expect is_num_palindrome(1221_u32)
+}
+
+test "is_num_palindrome: 12321 is palindrome" {
+    expect is_num_palindrome(12321_u32)
+}
+
+test "is_num_palindrome: 10 is not palindrome" {
+    expect is_num_palindrome(10_u32) == false
+}
+
+test "is_num_palindrome: 9 is palindrome" {
+    expect is_num_palindrome(9_u32)
+}
+
+test "is_num_palindrome: 100 is not palindrome" {
+    expect is_num_palindrome(100_u32) == false
+}

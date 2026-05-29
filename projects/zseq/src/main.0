@@ -1,0 +1,66 @@
+// zseq — print a sequence of numbers from start to end with optional step.
+//
+//   zseq <start> <end> [step]
+//
+// Examples:
+//   zseq 1 4       → 1\n2\n3\n4\n
+//   zseq 2 6 2     → 2\n4\n6\n
+use lib
+
+pub fn main(world: World) -> Void raises {
+    let argc: usize = std.args.len()
+    if argc < 3 {
+        check world.err.write("usage: zseq <start> <end> [step]\n")
+        return
+    }
+    let fa: Maybe<String> = std.args.get(1)
+    let fb: Maybe<String> = std.args.get(2)
+    if fa.has {
+        if fb.has {
+            let sa: Span<u8> = std.mem.span(fa.value)
+            let sb: Span<u8> = std.mem.span(fb.value)
+            if is_all_digits(sa) {
+                if is_all_digits(sb) {
+                    let start: u32 = parse_u32(sa)
+                    let end: u32 = parse_u32(sb)
+                    var step: u32 = 1
+                    if argc >= 4 {
+                        let fc: Maybe<String> = std.args.get(3)
+                        if fc.has {
+                            let sc: Span<u8> = std.mem.span(fc.value)
+                            if is_all_digits(sc) {
+                                let sv: u32 = parse_u32(sc)
+                                if sv == 0 {
+                                    check world.err.write("zseq: step must be >= 1\n")
+                                    return
+                                }
+                                step = sv
+                            } else {
+                                check world.err.write("zseq: step must be a non-negative integer\n")
+                                return
+                            }
+                        }
+                    }
+                    if start <= end {
+                        var cur: u32 = start
+                        var going: Bool = true
+                        while going {
+                            var buf: [10]u8 = [0; 10]
+                            check world.out.write(fmt_u32(buf, cur))
+                            check world.out.write("\n")
+                            if end - cur < step {
+                                going = false
+                            } else {
+                                cur = cur + step
+                            }
+                        }
+                    }
+                } else {
+                    check world.err.write("zseq: end must be a non-negative integer\n")
+                }
+            } else {
+                check world.err.write("zseq: start must be a non-negative integer\n")
+            }
+        }
+    }
+}

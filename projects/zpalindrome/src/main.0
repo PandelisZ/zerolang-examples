@@ -1,0 +1,46 @@
+// zpalindrome - print "yes" if each argument reads the same reversed, else "no".
+//
+//   zpalindrome racecar abc
+//   yes
+//   no
+//
+// The string byte-reversal check uses a while loop inline in main.
+// The numeric helper is_num_palindrome is exercised by `zero test` in lib.0.
+use lib
+
+pub fn main(world: World) -> Void raises {
+    let argc: usize = std.args.len()
+    if argc < 2 {
+        check world.err.write("usage: zpalindrome <string>...\n")
+        return
+    }
+    var i: usize = 1
+    while i < argc {
+        let arg: Maybe<String> = std.args.get(i)
+        if arg.has {
+            let s: Span<u8> = std.mem.span(arg.value)
+            let slen: usize = std.mem.len(s)
+            var ok: Bool = true
+            if slen > 1 {
+                var lo: usize = 0
+                var hi: usize = slen - 1
+                var scanning: Bool = true
+                while scanning && lo < hi {
+                    if s[lo] != s[hi] {
+                        ok = false
+                        scanning = false
+                    } else {
+                        lo = lo + 1
+                        hi = hi - 1
+                    }
+                }
+            }
+            if ok {
+                check world.out.write("yes\n")
+            } else {
+                check world.out.write("no\n")
+            }
+        }
+        i = i + 1
+    }
+}

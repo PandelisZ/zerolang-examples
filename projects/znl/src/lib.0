@@ -1,0 +1,73 @@
+// znl core logic.
+//
+// next_line_no is pure, cast-free — unit-testable by `zero test`.
+// fmt_u32 uses while — validated by zero run.
+
+// Advance the line counter by one.
+pub fn next_line_no(n: u32) -> u32 {
+    return n + 1_u32
+}
+
+// Decimal formatting: write `value` as ASCII digits into `buf`.
+pub fn fmt_u32(buf: MutSpan<u8>, value: u32) -> Span<u8> {
+    if value == 0 {
+        buf[0] = 48
+        return buf[0..1]
+    }
+    var nv: u32 = value
+    var tmp: [10]u8 = [0; 10]
+    var count: usize = 0
+    while nv > 0 {
+        tmp[count] = 48 + ((nv % 10) as u8)
+        nv = nv / 10
+        count = count + 1
+    }
+    var i: usize = 0
+    while i < count {
+        buf[i] = tmp[count - 1 - i]
+        i = i + 1
+    }
+    return buf[0..count]
+}
+
+// ---- next_line_no tests ----
+
+test "next_line_no: 0 -> 1" {
+    expect next_line_no(0_u32) == 1_u32
+}
+
+test "next_line_no: 1 -> 2" {
+    expect next_line_no(1_u32) == 2_u32
+}
+
+test "next_line_no: 2 -> 3" {
+    expect next_line_no(2_u32) == 3_u32
+}
+
+test "next_line_no: 9 -> 10" {
+    expect next_line_no(9_u32) == 10_u32
+}
+
+test "next_line_no: 10 -> 11" {
+    expect next_line_no(10_u32) == 11_u32
+}
+
+test "next_line_no: 99 -> 100" {
+    expect next_line_no(99_u32) == 100_u32
+}
+
+test "next_line_no: 999 -> 1000" {
+    expect next_line_no(999_u32) == 1000_u32
+}
+
+test "next_line_no: 4 -> 5" {
+    expect next_line_no(4_u32) == 5_u32
+}
+
+test "next_line_no: 100 -> 101" {
+    expect next_line_no(100_u32) == 101_u32
+}
+
+test "next_line_no: successor-of-successor: next(next(5)) == 7" {
+    expect next_line_no(next_line_no(5_u32)) == 7_u32
+}

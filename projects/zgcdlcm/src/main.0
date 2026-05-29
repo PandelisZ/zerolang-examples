@@ -1,0 +1,42 @@
+// zgcdlcm — print GCD and LCM of two non-negative integers.
+//
+//   zgcdlcm <a> <b>
+//
+// Example:
+//   zgcdlcm 12 18  → gcd=6 lcm=36\n
+use lib
+
+pub fn main(world: World) -> Void raises {
+    let argc: usize = std.args.len()
+    if argc != 3 {
+        check world.err.write("usage: zgcdlcm <a> <b>\n")
+        return
+    }
+    let fa: Maybe<String> = std.args.get(1)
+    let fb: Maybe<String> = std.args.get(2)
+    if fa.has {
+        if fb.has {
+            let sa: Span<u8> = std.mem.span(fa.value)
+            let sb: Span<u8> = std.mem.span(fb.value)
+            if is_all_digits(sa) {
+                if is_all_digits(sb) {
+                    let a: u32 = parse_u32(sa)
+                    let b: u32 = parse_u32(sb)
+                    let g: u32 = gcd(a, b)
+                    let l: u32 = lcm(a, b)
+                    check world.out.write("gcd=")
+                    var gbuf: [10]u8 = [0; 10]
+                    check world.out.write(fmt_u32(gbuf, g))
+                    check world.out.write(" lcm=")
+                    var lbuf: [10]u8 = [0; 10]
+                    check world.out.write(fmt_u32(lbuf, l))
+                    check world.out.write("\n")
+                } else {
+                    check world.err.write("zgcdlcm: b must be a non-negative integer\n")
+                }
+            } else {
+                check world.err.write("zgcdlcm: a must be a non-negative integer\n")
+            }
+        }
+    }
+}

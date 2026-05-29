@@ -1,0 +1,42 @@
+// zhexdump - print the lowercase hex of the bytes of each argument.
+//
+// Each argument is printed on its own line as a hex string.
+//
+//   zhexdump AB
+//   4142
+//
+//   zhexdump hi world
+//   6869
+//   776f726c64
+use lib
+
+pub fn main(world: World) -> Void raises {
+    let argc: usize = std.args.len()
+    if argc < 2 {
+        check world.err.write("usage: zhexdump <string>...\n")
+        return
+    }
+    var out: [256]u8 = [0; 256]
+    var i: usize = 1
+    while i < argc {
+        let arg: Maybe<String> = std.args.get(i)
+        if arg.has {
+            let s: Span<u8> = std.mem.span(arg.value)
+            let slen: usize = std.mem.len(s)
+            var pos: usize = 0
+            var j: usize = 0
+            while j < slen {
+                let b: u8 = s[j]
+                out[pos] = nibble_hex(b / 16)
+                pos = pos + 1
+                out[pos] = nibble_hex(b % 16)
+                pos = pos + 1
+                j = j + 1
+            }
+            out[pos] = 10
+            pos = pos + 1
+            check world.out.write(out[0..pos])
+        }
+        i = i + 1
+    }
+}

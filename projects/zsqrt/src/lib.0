@@ -1,0 +1,127 @@
+// zsqrt core logic.
+//
+// isqrt / isqrt_up are recursive and unit-tested by `zero test`.
+// fmt_u32 / is_all_digits / parse_u32 use while/std and are validated by
+// `zero check` and `zero run`.
+
+// Decimal formatting: write `value` as ASCII digits into `buf`.
+pub fn fmt_u32(buf: MutSpan<u8>, value: u32) -> Span<u8> {
+    if value == 0 {
+        buf[0] = 48
+        return buf[0..1]
+    }
+    var n: u32 = value
+    var tmp: [10]u8 = [0; 10]
+    var count: usize = 0
+    while n > 0 {
+        tmp[count] = 48 + ((n % 10) as u8)
+        n = n / 10
+        count = count + 1
+    }
+    var i: usize = 0
+    while i < count {
+        buf[i] = tmp[count - 1 - i]
+        i = i + 1
+    }
+    return buf[0..count]
+}
+
+// True when every byte of `s` is an ASCII digit and `s` is non-empty.
+pub fn is_all_digits(s: Span<u8>) -> Bool {
+    let n: usize = std.mem.len(s)
+    if n == 0 {
+        return false
+    }
+    var i: usize = 0
+    while i < n {
+        let c: u8 = s[i]
+        if c < 48 || c > 57 {
+            return false
+        }
+        i = i + 1
+    }
+    return true
+}
+
+// Parse a decimal byte span into u32. Caller must check is_all_digits first.
+pub fn parse_u32(s: Span<u8>) -> u32 {
+    let n: usize = std.mem.len(s)
+    var i: usize = 0
+    var acc: u32 = 0
+    while i < n {
+        acc = acc * 10 + ((s[i] - 48) as u32)
+        i = i + 1
+    }
+    return acc
+}
+
+// Integer floor square root: largest r such that r*r <= n.
+// Uses overflow-safe check: (r+1)^2 > n  ⟺  n/(r+1) < r+1.
+pub fn isqrt(n: u32) -> u32 {
+    return isqrt_up(n, 0_u32)
+}
+
+fn isqrt_up(n: u32, r: u32) -> u32 {
+    if n / (r + 1) < r + 1 {
+        return r
+    }
+    return isqrt_up(n, r + 1)
+}
+
+// ---- isqrt tests ----
+
+test "isqrt: isqrt(0) = 0" {
+    expect isqrt(0_u32) == 0_u32
+}
+
+test "isqrt: isqrt(1) = 1" {
+    expect isqrt(1_u32) == 1_u32
+}
+
+test "isqrt: isqrt(2) = 1" {
+    expect isqrt(2_u32) == 1_u32
+}
+
+test "isqrt: isqrt(3) = 1" {
+    expect isqrt(3_u32) == 1_u32
+}
+
+test "isqrt: isqrt(4) = 2" {
+    expect isqrt(4_u32) == 2_u32
+}
+
+test "isqrt: isqrt(8) = 2" {
+    expect isqrt(8_u32) == 2_u32
+}
+
+test "isqrt: isqrt(9) = 3" {
+    expect isqrt(9_u32) == 3_u32
+}
+
+test "isqrt: isqrt(15) = 3" {
+    expect isqrt(15_u32) == 3_u32
+}
+
+test "isqrt: isqrt(16) = 4" {
+    expect isqrt(16_u32) == 4_u32
+}
+
+test "isqrt: isqrt(17) = 4" {
+    expect isqrt(17_u32) == 4_u32
+}
+
+test "isqrt: isqrt(24) = 4" {
+    expect isqrt(24_u32) == 4_u32
+}
+
+test "isqrt: isqrt(25) = 5" {
+    expect isqrt(25_u32) == 5_u32
+}
+
+test "isqrt: isqrt(99) = 9" {
+    expect isqrt(99_u32) == 9_u32
+}
+
+test "isqrt: isqrt(100) = 10" {
+    expect isqrt(100_u32) == 10_u32
+}

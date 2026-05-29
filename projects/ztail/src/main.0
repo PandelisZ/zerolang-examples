@@ -1,0 +1,61 @@
+// ztail - print the last N argument-lines.
+//
+// Modeled on coreutils `tail`. Each argument is one line (this backend has
+// no stdin/file runtime). Prints the last N lines; default N = 10.
+//
+//   ztail -n 2 a b c
+//   b
+//   c
+use lib
+
+pub fn main(world: World) -> Void raises {
+    let argc: usize = std.args.len()
+    if argc < 2 {
+        check world.err.write("usage: ztail [-n N] line...\n")
+        return
+    }
+    var data_start: usize = 1
+    var limit: u32 = 10_u32
+    let fa: Maybe<String> = std.args.get(1)
+    if fa.has {
+        if std.mem.eql(fa.value, "-n") {
+            if argc < 3 {
+                check world.err.write("ztail: -n requires a count\n")
+                return
+            }
+            let na: Maybe<String> = std.args.get(2)
+            if na.has {
+                let ns: Span<u8> = std.mem.span(na.value)
+                if is_all_digits(ns) {
+                    limit = parse_u32(ns)
+                } else {
+                    check world.err.write("ztail: invalid count\n")
+                    return
+                }
+            }
+            data_start = 3
+        }
+    }
+    // Count data args.
+    var ci: usize = data_start
+    var total: u32 = 0
+    while ci < argc {
+        total = total + 1
+        ci = ci + 1
+    }
+    let skip: u32 = tail_start(total, limit)
+    var i: usize = data_start
+    var skipped: u32 = 0
+    while i < argc {
+        if skipped >= skip {
+            let av: Maybe<String> = std.args.get(i)
+            if av.has {
+                check world.out.write(av.value)
+                check world.out.write("\n")
+            }
+        } else {
+            skipped = skipped + 1
+        }
+        i = i + 1
+    }
+}

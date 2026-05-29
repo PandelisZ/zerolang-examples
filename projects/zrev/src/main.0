@@ -1,0 +1,36 @@
+// zrev - reverse the characters of each argument.
+//
+//   zrev abc         -> cba
+//   zrev hello world -> olleh dlrow
+use lib
+
+pub fn main(world: World) -> Void raises {
+    let argc: usize = std.args.len()
+    if argc < 2 {
+        check world.err.write("usage: zrev <text>...\n")
+        return
+    }
+
+    var out: [256]u8 = [0; 256]
+
+    var idx: usize = 1
+    while idx < argc {
+        let t: Maybe<String> = std.args.get(idx)
+        if t.has {
+            let text: Span<u8> = std.mem.span(t.value)
+            let n: usize = std.mem.len(text)
+            var lim: usize = n
+            if lim > 256 {
+                lim = 256
+            }
+            var i: usize = 0
+            while i < lim {
+                out[i] = text[mirror_index(i, lim)]
+                i = i + 1
+            }
+            check world.out.write(out[0..lim])
+            check world.out.write("\n")
+        }
+        idx = idx + 1
+    }
+}

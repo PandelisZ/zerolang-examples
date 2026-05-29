@@ -1,0 +1,44 @@
+// zcaesar - Caesar-shift letters in each argument by a given offset.
+//
+//   zcaesar 3 abc         -> def
+//   zcaesar 3 xyz         -> abc
+//   zcaesar 13 Hello      -> Uryyb
+use lib
+
+pub fn main(world: World) -> Void raises {
+    let argc: usize = std.args.len()
+    if argc < 3 {
+        check world.err.write("usage: zcaesar <n> <text>...\n")
+        return
+    }
+
+    let shift_arg: Maybe<String> = std.args.get(1)
+    if shift_arg.has == false {
+        return
+    }
+    let shift_span: Span<u8> = std.mem.span(shift_arg.value)
+    let shift: u32 = parse_u32(shift_span)
+
+    var out: [256]u8 = [0; 256]
+
+    var idx: usize = 2
+    while idx < argc {
+        let ta: Maybe<String> = std.args.get(idx)
+        if ta.has {
+            let text: Span<u8> = std.mem.span(ta.value)
+            let tlen: usize = std.mem.len(text)
+            var lim: usize = tlen
+            if lim > 256 {
+                lim = 256
+            }
+            var wi: usize = 0
+            while wi < lim {
+                out[wi] = shift_letter(text[wi], shift)
+                wi = wi + 1
+            }
+            check world.out.write(out[0..lim])
+            check world.out.write("\n")
+        }
+        idx = idx + 1
+    }
+}

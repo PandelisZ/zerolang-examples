@@ -1,0 +1,74 @@
+// zord core logic - ASCII ordinal helpers.
+
+// True when c is a printable ASCII byte (32..=126).
+pub fn is_ascii_printable(c: u8) -> Bool {
+    if c >= 32 && c <= 126 {
+        return true
+    }
+    return false
+}
+
+// Format a u32 value as decimal ASCII into buf; return the written slice.
+// Uses runtime features (while, as-cast); verified by zero run, not zero test.
+pub fn fmt_u32(buf: MutSpan<u8>, value: u32) -> Span<u8> {
+    if value == 0 {
+        buf[0] = 48
+        return buf[0..1]
+    }
+    var fv: u32 = value
+    var tmp: [10]u8 = [0; 10]
+    var cnt: usize = 0
+    while fv > 0 {
+        tmp[cnt] = 48 + ((fv % 10) as u8)
+        fv = fv / 10
+        cnt = cnt + 1
+    }
+    var fi: usize = 0
+    while fi < cnt {
+        buf[fi] = tmp[cnt - 1 - fi]
+        fi = fi + 1
+    }
+    return buf[0..cnt]
+}
+
+// ── is_ascii_printable tests ───────────────────────────────────────────────
+
+test "is_ascii_printable: space(32) is printable" {
+    expect is_ascii_printable(32_u8)
+}
+
+test "is_ascii_printable: tilde(126) is printable" {
+    expect is_ascii_printable(126_u8)
+}
+
+test "is_ascii_printable: A(65) is printable" {
+    expect is_ascii_printable(65_u8)
+}
+
+test "is_ascii_printable: z(122) is printable" {
+    expect is_ascii_printable(122_u8)
+}
+
+test "is_ascii_printable: digit 0(48) is printable" {
+    expect is_ascii_printable(48_u8)
+}
+
+test "is_ascii_printable: null(0) is not printable" {
+    expect is_ascii_printable(0_u8) == false
+}
+
+test "is_ascii_printable: char 31 is not printable" {
+    expect is_ascii_printable(31_u8) == false
+}
+
+test "is_ascii_printable: del(127) is not printable" {
+    expect is_ascii_printable(127_u8) == false
+}
+
+test "is_ascii_printable: newline(10) is not printable" {
+    expect is_ascii_printable(10_u8) == false
+}
+
+test "is_ascii_printable: tab(9) is not printable" {
+    expect is_ascii_printable(9_u8) == false
+}

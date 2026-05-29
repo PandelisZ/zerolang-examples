@@ -1,0 +1,107 @@
+// zhexdump core logic.
+//
+// nibble_hex: map a nibble (0..15) to its lowercase ASCII hex character.
+// Pure u8 arithmetic, no casts — safe for `zero test`.
+
+pub fn nibble_hex(v: u8) -> u8 {
+    if v < 10 {
+        return 48 + v
+    }
+    return 87 + v
+}
+
+// is_all_digits / parse_u32 / fmt_u32 copied from zfactor/lib.0 for argv parsing.
+
+pub fn fmt_u32(buf: MutSpan<u8>, value: u32) -> Span<u8> {
+    if value == 0 {
+        buf[0] = 48
+        return buf[0..1]
+    }
+    var n: u32 = value
+    var tmp: [10]u8 = [0; 10]
+    var count: usize = 0
+    while n > 0 {
+        tmp[count] = 48 + ((n % 10) as u8)
+        n = n / 10
+        count = count + 1
+    }
+    var i: usize = 0
+    while i < count {
+        buf[i] = tmp[count - 1 - i]
+        i = i + 1
+    }
+    return buf[0..count]
+}
+
+pub fn is_all_digits(s: Span<u8>) -> Bool {
+    let n: usize = std.mem.len(s)
+    if n == 0 {
+        return false
+    }
+    var i: usize = 0
+    while i < n {
+        let c: u8 = s[i]
+        if c < 48 || c > 57 {
+            return false
+        }
+        i = i + 1
+    }
+    return true
+}
+
+pub fn parse_u32(s: Span<u8>) -> u32 {
+    let n: usize = std.mem.len(s)
+    var i: usize = 0
+    var acc: u32 = 0
+    while i < n {
+        acc = acc * 10 + ((s[i] - 48) as u32)
+        i = i + 1
+    }
+    return acc
+}
+
+// ── nibble_hex tests (11) ─────────────────────────────────────────────────────
+
+test "nibble_hex: 0 -> '0' (48)" {
+    expect nibble_hex(0_u8) == 48_u8
+}
+
+test "nibble_hex: 1 -> '1' (49)" {
+    expect nibble_hex(1_u8) == 49_u8
+}
+
+test "nibble_hex: 2 -> '2' (50)" {
+    expect nibble_hex(2_u8) == 50_u8
+}
+
+test "nibble_hex: 5 -> '5' (53)" {
+    expect nibble_hex(5_u8) == 53_u8
+}
+
+test "nibble_hex: 9 -> '9' (57)" {
+    expect nibble_hex(9_u8) == 57_u8
+}
+
+test "nibble_hex: 10 -> 'a' (97)" {
+    expect nibble_hex(10_u8) == 97_u8
+}
+
+test "nibble_hex: 11 -> 'b' (98)" {
+    expect nibble_hex(11_u8) == 98_u8
+}
+
+test "nibble_hex: 12 -> 'c' (99)" {
+    expect nibble_hex(12_u8) == 99_u8
+}
+
+test "nibble_hex: 13 -> 'd' (100)" {
+    expect nibble_hex(13_u8) == 100_u8
+}
+
+test "nibble_hex: 14 -> 'e' (101)" {
+    expect nibble_hex(14_u8) == 101_u8
+}
+
+test "nibble_hex: 15 -> 'f' (102)" {
+    expect nibble_hex(15_u8) == 102_u8
+}

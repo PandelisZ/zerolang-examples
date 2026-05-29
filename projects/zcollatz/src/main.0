@@ -1,0 +1,46 @@
+// zcollatz — print the Collatz sequence from n to 1, space-separated.
+//
+//   zcollatz <n>
+//
+// Example:
+//   zcollatz 6  → 6 3 10 5 16 8 4 2 1\n
+use lib
+
+pub fn main(world: World) -> Void raises {
+    let argc: usize = std.args.len()
+    if argc != 2 {
+        check world.err.write("usage: zcollatz <n>\n")
+        return
+    }
+    let fa: Maybe<String> = std.args.get(1)
+    if fa.has {
+        let sa: Span<u8> = std.mem.span(fa.value)
+        if is_all_digits(sa) {
+            let n: u32 = parse_u32(sa)
+            if n == 0 {
+                check world.err.write("zcollatz: n must be >= 1\n")
+                return
+            }
+            var buf0: [10]u8 = [0; 10]
+            check world.out.write(fmt_u32(buf0, n))
+            var cur: u32 = n
+            var going: Bool = cur != 1
+            while going {
+                if cur % 2 == 0 {
+                    cur = cur / 2
+                } else {
+                    cur = cur * 3 + 1
+                }
+                check world.out.write(" ")
+                var buf: [10]u8 = [0; 10]
+                check world.out.write(fmt_u32(buf, cur))
+                if cur == 1 {
+                    going = false
+                }
+            }
+            check world.out.write("\n")
+        } else {
+            check world.err.write("zcollatz: argument must be a non-negative integer\n")
+        }
+    }
+}

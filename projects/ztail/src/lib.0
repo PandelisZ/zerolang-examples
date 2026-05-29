@@ -1,0 +1,106 @@
+// ztail core logic.
+//
+// tail_start is pure, branch-only, cast-free — unit-testable by `zero test`.
+// fmt_u32, is_all_digits, parse_u32 use while/std.* — validated by zero run.
+
+// Return how many leading data args to skip so that the last `n` are printed.
+// When n >= total every arg is printed (skip 0).
+pub fn tail_start(total: u32, n: u32) -> u32 {
+    if n >= total {
+        return 0_u32
+    }
+    return total - n
+}
+
+// Decimal formatting: write `value` as ASCII digits into `buf`.
+pub fn fmt_u32(buf: MutSpan<u8>, value: u32) -> Span<u8> {
+    if value == 0 {
+        buf[0] = 48
+        return buf[0..1]
+    }
+    var nv: u32 = value
+    var tmp: [10]u8 = [0; 10]
+    var count: usize = 0
+    while nv > 0 {
+        tmp[count] = 48 + ((nv % 10) as u8)
+        nv = nv / 10
+        count = count + 1
+    }
+    var i: usize = 0
+    while i < count {
+        buf[i] = tmp[count - 1 - i]
+        i = i + 1
+    }
+    return buf[0..count]
+}
+
+// True when every byte of `s` is an ASCII digit and `s` is non-empty.
+pub fn is_all_digits(s: Span<u8>) -> Bool {
+    let n: usize = std.mem.len(s)
+    if n == 0 {
+        return false
+    }
+    var i: usize = 0
+    while i < n {
+        let c: u8 = s[i]
+        if c < 48 || c > 57 {
+            return false
+        }
+        i = i + 1
+    }
+    return true
+}
+
+// Parse a decimal byte span into u32. Caller must check is_all_digits first.
+pub fn parse_u32(s: Span<u8>) -> u32 {
+    let n: usize = std.mem.len(s)
+    var i: usize = 0
+    var acc: u32 = 0
+    while i < n {
+        acc = acc * 10 + ((s[i] - 48) as u32)
+        i = i + 1
+    }
+    return acc
+}
+
+// ---- tail_start tests ----
+
+test "tail_start: n=0 total=5 skip all (returns 5)" {
+    expect tail_start(5_u32, 0_u32) == 5_u32
+}
+
+test "tail_start: n=2 total=5 skip 3" {
+    expect tail_start(5_u32, 2_u32) == 3_u32
+}
+
+test "tail_start: n=5 total=5 skip 0 (equal)" {
+    expect tail_start(5_u32, 5_u32) == 0_u32
+}
+
+test "tail_start: n=10 total=3 skip 0 (n>=total)" {
+    expect tail_start(3_u32, 10_u32) == 0_u32
+}
+
+test "tail_start: n=0 total=0 skip 0" {
+    expect tail_start(0_u32, 0_u32) == 0_u32
+}
+
+test "tail_start: n=1 total=1 skip 0" {
+    expect tail_start(1_u32, 1_u32) == 0_u32
+}
+
+test "tail_start: n=1 total=3 skip 2" {
+    expect tail_start(3_u32, 1_u32) == 2_u32
+}
+
+test "tail_start: n=3 total=3 skip 0" {
+    expect tail_start(3_u32, 3_u32) == 0_u32
+}
+
+test "tail_start: n=4 total=3 skip 0 (n>total)" {
+    expect tail_start(3_u32, 4_u32) == 0_u32
+}
+
+test "tail_start: n=2 total=10 skip 8" {
+    expect tail_start(10_u32, 2_u32) == 8_u32
+}

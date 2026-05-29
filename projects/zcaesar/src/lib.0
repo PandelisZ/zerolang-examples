@@ -1,0 +1,103 @@
+// zcaesar core logic - Caesar cipher helpers.
+
+// Shift a lowercase letter one step forward, wrapping z -> a.
+fn shift_lower_by_one(c: u8) -> u8 {
+    if c == 122 {
+        return 97
+    }
+    return c + 1
+}
+
+// Shift an uppercase letter one step forward, wrapping Z -> A.
+fn shift_upper_by_one(c: u8) -> u8 {
+    if c == 90 {
+        return 65
+    }
+    return c + 1
+}
+
+// Shift lowercase letter c by n positions (n should already be reduced mod 26).
+fn shift_lower(c: u8, n: u32) -> u8 {
+    if n == 0 {
+        return c
+    }
+    return shift_lower(shift_lower_by_one(c), n - 1)
+}
+
+// Shift uppercase letter c by n positions (n should already be reduced mod 26).
+fn shift_upper(c: u8, n: u32) -> u8 {
+    if n == 0 {
+        return c
+    }
+    return shift_upper(shift_upper_by_one(c), n - 1)
+}
+
+// Caesar-shift a single byte by n positions.
+// Rotates a-z and A-Z by n mod 26; leaves non-letters unchanged.
+pub fn shift_letter(c: u8, n: u32) -> u8 {
+    if c >= 97 && c <= 122 {
+        return shift_lower(c, n % 26)
+    }
+    if c >= 65 && c <= 90 {
+        return shift_upper(c, n % 26)
+    }
+    return c
+}
+
+// Parse a decimal string into u32 (runtime helper; uses std.mem and as-cast).
+pub fn parse_u32(s: Span<u8>) -> u32 {
+    let slen: usize = std.mem.len(s)
+    var pi: usize = 0
+    var acc: u32 = 0
+    while pi < slen {
+        acc = acc * 10 + ((s[pi] - 48) as u32)
+        pi = pi + 1
+    }
+    return acc
+}
+
+// ── shift_letter tests ─────────────────────────────────────────────────────
+
+test "shift_letter: a+3 = d" {
+    expect shift_letter(97_u8, 3_u32) == 100_u8
+}
+
+test "shift_letter: z+3 wraps to c" {
+    expect shift_letter(122_u8, 3_u32) == 99_u8
+}
+
+test "shift_letter: b+25 wraps to a" {
+    expect shift_letter(98_u8, 25_u32) == 97_u8
+}
+
+test "shift_letter: A+3 = D (uppercase)" {
+    expect shift_letter(65_u8, 3_u32) == 68_u8
+}
+
+test "shift_letter: Z+3 wraps to C (uppercase)" {
+    expect shift_letter(90_u8, 3_u32) == 67_u8
+}
+
+test "shift_letter: non-letter digit 48 unchanged" {
+    expect shift_letter(48_u8, 3_u32) == 48_u8
+}
+
+test "shift_letter: non-letter space 32 unchanged" {
+    expect shift_letter(32_u8, 5_u32) == 32_u8
+}
+
+test "shift_letter: shift 0 is identity for a" {
+    expect shift_letter(97_u8, 0_u32) == 97_u8
+}
+
+test "shift_letter: shift 26 is identity for a" {
+    expect shift_letter(97_u8, 26_u32) == 97_u8
+}
+
+test "shift_letter: shift 26 is identity for Z" {
+    expect shift_letter(90_u8, 26_u32) == 90_u8
+}
+
+test "shift_letter: m+13 wraps to z" {
+    expect shift_letter(109_u8, 13_u32) == 122_u8
+}

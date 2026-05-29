@@ -1,0 +1,57 @@
+// zrev core logic - character reversal helpers.
+
+// Return the mirror index of position i in a span of length n.
+// For valid 0 <= i < n this equals n - 1 - i.
+pub fn mirror_index(i: usize, n: usize) -> usize {
+    return n - 1 - i
+}
+
+// ── mirror_index tests ─────────────────────────────────────────────────────
+
+test "mirror_index: 0 in len 5 -> 4" {
+    expect mirror_index(0_usize, 5_usize) == 4_usize
+}
+
+test "mirror_index: 4 in len 5 -> 0" {
+    expect mirror_index(4_usize, 5_usize) == 0_usize
+}
+
+test "mirror_index: 2 in len 5 -> 2 (middle)" {
+    expect mirror_index(2_usize, 5_usize) == 2_usize
+}
+
+test "mirror_index: 0 in len 1 -> 0" {
+    expect mirror_index(0_usize, 1_usize) == 0_usize
+}
+
+test "mirror_index: 0 in len 2 -> 1" {
+    expect mirror_index(0_usize, 2_usize) == 1_usize
+}
+
+test "mirror_index: 1 in len 2 -> 0" {
+    expect mirror_index(1_usize, 2_usize) == 0_usize
+}
+
+test "mirror_index: 0 in len 3 -> 2" {
+    expect mirror_index(0_usize, 3_usize) == 2_usize
+}
+
+test "mirror_index: 1 in len 3 -> 1" {
+    expect mirror_index(1_usize, 3_usize) == 1_usize
+}
+
+test "mirror_index: 2 in len 3 -> 0" {
+    expect mirror_index(2_usize, 3_usize) == 0_usize
+}
+
+test "mirror_index: 0 in len 10 -> 9" {
+    expect mirror_index(0_usize, 10_usize) == 9_usize
+}
+
+test "mirror_index: 9 in len 10 -> 0" {
+    expect mirror_index(9_usize, 10_usize) == 0_usize
+}
+
+test "mirror_index: 5 in len 10 -> 4" {
+    expect mirror_index(5_usize, 10_usize) == 4_usize
+}

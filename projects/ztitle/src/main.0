@@ -1,0 +1,46 @@
+// ztitle - Title-Case Each Space-Separated Word of each argument.
+//
+//   ztitle "hello world"    -> Hello World
+//   ztitle foo bar          -> Foo Bar
+use lib
+
+pub fn main(world: World) -> Void raises {
+    let argc: usize = std.args.len()
+    if argc < 2 {
+        check world.err.write("usage: ztitle <text>...\n")
+        return
+    }
+
+    var out: [256]u8 = [0; 256]
+
+    var idx: usize = 1
+    while idx < argc {
+        let ta: Maybe<String> = std.args.get(idx)
+        if ta.has {
+            let text: Span<u8> = std.mem.span(ta.value)
+            let tlen: usize = std.mem.len(text)
+            var lim: usize = tlen
+            if lim > 256 {
+                lim = 256
+            }
+            var wi: usize = 0
+            var at_word_start: Bool = true
+            while wi < lim {
+                let cb: u8 = text[wi]
+                if cb == 32 {
+                    out[wi] = cb
+                    at_word_start = true
+                } else if at_word_start {
+                    out[wi] = to_upper(cb)
+                    at_word_start = false
+                } else {
+                    out[wi] = to_lower(cb)
+                }
+                wi = wi + 1
+            }
+            check world.out.write(out[0..lim])
+            check world.out.write("\n")
+        }
+        idx = idx + 1
+    }
+}

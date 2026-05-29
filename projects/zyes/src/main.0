@@ -1,0 +1,57 @@
+// zyes - print <text> N times (default 3), one per line.
+//
+//   zyes hi
+//   hi
+//   hi
+//   hi
+//
+//   zyes -n 5 hello
+//   hello
+//   hello
+//   hello
+//   hello
+//   hello
+use lib
+
+pub fn main(world: World) -> Void raises {
+    let argc: usize = std.args.len()
+    if argc < 2 {
+        check world.err.write("usage: zyes [-n N] <text>\n")
+        return
+    }
+
+    var count: u32 = 3
+    var text_idx: usize = 1
+
+    // Check if first arg is "-n".
+    let fa: Maybe<String> = std.args.get(1)
+    if fa.has {
+        let fs: Span<u8> = std.mem.span(fa.value)
+        let flen: usize = std.mem.len(fs)
+        if flen == 2 && fs[0] == 45 && fs[1] == 110 {
+            // "-n" found; next arg is the count, arg after that is text.
+            if argc < 4 {
+                check world.err.write("usage: zyes [-n N] <text>\n")
+                return
+            }
+            let na: Maybe<String> = std.args.get(2)
+            if na.has {
+                let ns: Span<u8> = std.mem.span(na.value)
+                if is_all_digits(ns) {
+                    count = clamp_count(parse_u32(ns), 1000_u32)
+                }
+            }
+            text_idx = 3
+        }
+    }
+
+    let ta: Maybe<String> = std.args.get(text_idx)
+    if ta.has {
+        var k: u32 = 0
+        while k < count {
+            check world.out.write(ta.value)
+            check world.out.write("\n")
+            k = k + 1
+        }
+    }
+}
