@@ -42,6 +42,9 @@ pub fn count_digits_in_base(value: u32, base: u32) -> u32 {
 // The tests below avoid `as` casts and span indexing, the two things the
 // 0.2.0 test interpreter cannot evaluate. digit_val / digit_char / parse /
 // format are exercised end-to-end by `zero run` instead.
+
+// --- pow_u32 tests ---
+
 test "pow_u32: 2^10 = 1024" {
     expect pow_u32(2_u32, 10_u32) == 1024_u32
 }
@@ -50,12 +53,70 @@ test "pow_u32: anything^0 = 1" {
     expect pow_u32(7_u32, 0_u32) == 1_u32
 }
 
+test "pow_u32: base^0 = 1 for several bases" {
+    expect pow_u32(1_u32, 0_u32) == 1_u32
+    expect pow_u32(2_u32, 0_u32) == 1_u32
+    expect pow_u32(10_u32, 0_u32) == 1_u32
+    expect pow_u32(16_u32, 0_u32) == 1_u32
+}
+
+test "pow_u32: 2^1 = 2" {
+    expect pow_u32(2_u32, 1_u32) == 2_u32
+}
+
+test "pow_u32: 2^8 = 256" {
+    expect pow_u32(2_u32, 8_u32) == 256_u32
+}
+
+test "pow_u32: 10^3 = 1000" {
+    expect pow_u32(10_u32, 3_u32) == 1000_u32
+}
+
+test "pow_u32: 3^4 = 81" {
+    expect pow_u32(3_u32, 4_u32) == 81_u32
+}
+
+test "pow_u32: 16^2 = 256" {
+    expect pow_u32(16_u32, 2_u32) == 256_u32
+}
+
+test "pow_u32: 1^anything = 1" {
+    expect pow_u32(1_u32, 0_u32) == 1_u32
+    expect pow_u32(1_u32, 1_u32) == 1_u32
+    expect pow_u32(1_u32, 5_u32) == 1_u32
+    expect pow_u32(1_u32, 10_u32) == 1_u32
+}
+
+// --- count_digits_in_base tests ---
+
 test "count_digits: 255 in base 16 needs 2" {
     expect count_digits_in_base(255_u32, 16_u32) == 2_u32
 }
 
 test "count_digits: 255 in base 2 needs 8" {
     expect count_digits_in_base(255_u32, 2_u32) == 8_u32
+}
+
+test "count_digits: value < base -> 1" {
+    expect count_digits_in_base(5_u32, 10_u32) == 1_u32
+    expect count_digits_in_base(0_u32, 2_u32) == 1_u32
+    expect count_digits_in_base(9_u32, 10_u32) == 1_u32
+}
+
+test "count_digits: 256 in base 16 needs 3" {
+    expect count_digits_in_base(256_u32, 16_u32) == 3_u32
+}
+
+test "count_digits: 10 in base 10 needs 2" {
+    expect count_digits_in_base(10_u32, 10_u32) == 2_u32
+}
+
+test "count_digits: 1000 in base 10 needs 4" {
+    expect count_digits_in_base(1000_u32, 10_u32) == 4_u32
+}
+
+test "count_digits: 7 in base 2 needs 3" {
+    expect count_digits_in_base(7_u32, 2_u32) == 3_u32
 }
 
 // --- span helpers (while-based; check/run validated) ---

@@ -88,3 +88,164 @@ test "byte_eq case sensitive" {
 test "byte_eq case insensitive" {
     expect byte_eq(65_u8, 97_u8, true)
 }
+
+// to_lower: full uppercase range A-Z -> a-z
+test "to_lower A (65) -> a (97)" {
+    expect to_lower(65_u8) == 97_u8
+}
+
+test "to_lower Z (90) -> z (122)" {
+    expect to_lower(90_u8) == 122_u8
+}
+
+test "to_lower M (77) -> m (109)" {
+    expect to_lower(77_u8) == 109_u8
+}
+
+// to_lower: already lowercase is unchanged
+test "to_lower a (97) unchanged" {
+    expect to_lower(97_u8) == 97_u8
+}
+
+test "to_lower z (122) unchanged" {
+    expect to_lower(122_u8) == 122_u8
+}
+
+test "to_lower m (109) unchanged" {
+    expect to_lower(109_u8) == 109_u8
+}
+
+// to_lower: digits unchanged
+test "to_lower 0 (48) unchanged" {
+    expect to_lower(48_u8) == 48_u8
+}
+
+test "to_lower 9 (57) unchanged" {
+    expect to_lower(57_u8) == 57_u8
+}
+
+// to_lower: space unchanged
+test "to_lower space (32) unchanged" {
+    expect to_lower(32_u8) == 32_u8
+}
+
+// to_lower: punctuation / boundary bytes around the uppercase range
+// 64 is '@' — one below 'A' (65); must not be lowercased
+test "to_lower at-sign (64) unchanged" {
+    expect to_lower(64_u8) == 64_u8
+}
+
+// 91 is '[' — one above 'Z' (90); must not be lowercased
+test "to_lower open-bracket (91) unchanged" {
+    expect to_lower(91_u8) == 91_u8
+}
+
+// 96 is '`' — one below 'a' (97); already outside lowercase range and below uppercase range
+test "to_lower backtick (96) unchanged" {
+    expect to_lower(96_u8) == 96_u8
+}
+
+// 123 is '{' — one above 'z' (122); must not be changed
+test "to_lower open-brace (123) unchanged" {
+    expect to_lower(123_u8) == 123_u8
+}
+
+// to_lower: zero byte unchanged
+test "to_lower null byte (0) unchanged" {
+    expect to_lower(0_u8) == 0_u8
+}
+
+// byte_eq: case-sensitive equal pairs
+test "byte_eq same lowercase equal sensitive" {
+    expect byte_eq(97_u8, 97_u8, false) == true
+}
+
+test "byte_eq same uppercase equal sensitive" {
+    expect byte_eq(65_u8, 65_u8, false) == true
+}
+
+test "byte_eq same digit equal sensitive" {
+    expect byte_eq(48_u8, 48_u8, false) == true
+}
+
+// byte_eq: case-sensitive unequal pairs
+test "byte_eq upper vs lower unequal sensitive" {
+    expect byte_eq(65_u8, 97_u8, false) == false
+}
+
+test "byte_eq lower vs upper unequal sensitive" {
+    expect byte_eq(97_u8, 65_u8, false) == false
+}
+
+test "byte_eq different letters unequal sensitive" {
+    expect byte_eq(65_u8, 66_u8, false) == false
+}
+
+test "byte_eq different digits unequal sensitive" {
+    expect byte_eq(48_u8, 49_u8, false) == false
+}
+
+// byte_eq: case-insensitive — upper vs lower and lower vs upper
+test "byte_eq A vs a equal insensitive" {
+    expect byte_eq(65_u8, 97_u8, true) == true
+}
+
+test "byte_eq a vs A equal insensitive" {
+    expect byte_eq(97_u8, 65_u8, true) == true
+}
+
+test "byte_eq Z vs z equal insensitive" {
+    expect byte_eq(90_u8, 122_u8, true) == true
+}
+
+test "byte_eq z vs Z equal insensitive" {
+    expect byte_eq(122_u8, 90_u8, true) == true
+}
+
+test "byte_eq B vs b equal insensitive" {
+    expect byte_eq(66_u8, 98_u8, true) == true
+}
+
+test "byte_eq b vs B equal insensitive" {
+    expect byte_eq(98_u8, 66_u8, true) == true
+}
+
+// byte_eq: case-insensitive — different letters still differ
+test "byte_eq A vs B unequal insensitive" {
+    expect byte_eq(65_u8, 66_u8, true) == false
+}
+
+test "byte_eq a vs b unequal insensitive" {
+    expect byte_eq(97_u8, 98_u8, true) == false
+}
+
+// byte_eq: non-letters are compared as-is even with ignore_case=true
+test "byte_eq digit 0 vs 0 equal insensitive" {
+    expect byte_eq(48_u8, 48_u8, true) == true
+}
+
+test "byte_eq digit 0 vs 1 unequal insensitive" {
+    expect byte_eq(48_u8, 49_u8, true) == false
+}
+
+test "byte_eq space vs space equal insensitive" {
+    expect byte_eq(32_u8, 32_u8, true) == true
+}
+
+test "byte_eq space vs digit unequal insensitive" {
+    expect byte_eq(32_u8, 48_u8, true) == false
+}
+
+// byte_eq: boundary bytes '@'(64) and '['(91) are not letters
+test "byte_eq at-sign vs at-sign equal insensitive" {
+    expect byte_eq(64_u8, 64_u8, true) == true
+}
+
+test "byte_eq open-bracket vs open-bracket equal insensitive" {
+    expect byte_eq(91_u8, 91_u8, true) == true
+}
+
+// '@'(64) is NOT 'A'(65) — to_lower leaves it at 64, not 96
+test "byte_eq at-sign (64) not equal to backtick (96) insensitive" {
+    expect byte_eq(64_u8, 96_u8, true) == false
+}

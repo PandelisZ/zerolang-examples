@@ -78,6 +78,22 @@ pub fn line_cmp(i: usize, j: usize, numeric: Bool) -> i32 {
     return compare_spans(sa, sb)
 }
 
+// Return the smaller of two u32 values.
+pub fn min_u32(a: u32, b: u32) -> u32 {
+    if a < b {
+        return a
+    }
+    return b
+}
+
+// Return the larger of two u32 values.
+pub fn max_u32(a: u32, b: u32) -> u32 {
+    if a > b {
+        return a
+    }
+    return b
+}
+
 test "cmp_u32: less" {
     expect cmp_u32(3_u32, 9_u32) == -1
 }
@@ -88,4 +104,95 @@ test "cmp_u32: greater" {
 
 test "cmp_u32: equal" {
     expect cmp_u32(5_u32, 5_u32) == 0
+}
+
+// --- boundary values ---
+
+test "cmp_u32: zero equals zero" {
+    expect cmp_u32(0_u32, 0_u32) == 0
+}
+
+test "cmp_u32: zero less than one" {
+    expect cmp_u32(0_u32, 1_u32) == -1
+}
+
+test "cmp_u32: one greater than zero" {
+    expect cmp_u32(1_u32, 0_u32) == 1
+}
+
+test "cmp_u32: large equal values" {
+    expect cmp_u32(4294967295_u32, 4294967295_u32) == 0
+}
+
+test "cmp_u32: large less-than" {
+    expect cmp_u32(1000000_u32, 9999999_u32) == -1
+}
+
+test "cmp_u32: large greater-than" {
+    expect cmp_u32(9999999_u32, 1000000_u32) == 1
+}
+
+// --- antisymmetry: cmp(a,b) and cmp(b,a) have opposite signs ---
+
+test "cmp_u32: antisymmetry a<b gives -1" {
+    expect cmp_u32(7_u32, 42_u32) == -1
+}
+
+test "cmp_u32: antisymmetry b<a gives 1" {
+    expect cmp_u32(42_u32, 7_u32) == 1
+}
+
+test "cmp_u32: antisymmetry near-equal a<b" {
+    expect cmp_u32(99_u32, 100_u32) == -1
+}
+
+test "cmp_u32: antisymmetry near-equal b<a" {
+    expect cmp_u32(100_u32, 99_u32) == 1
+}
+
+// --- min_u32 ---
+
+test "min_u32: picks smaller" {
+    expect min_u32(3_u32, 7_u32) == 3_u32
+}
+
+test "min_u32: picks smaller reversed" {
+    expect min_u32(7_u32, 3_u32) == 3_u32
+}
+
+test "min_u32: equal values" {
+    expect min_u32(5_u32, 5_u32) == 5_u32
+}
+
+test "min_u32: zero boundary" {
+    expect min_u32(0_u32, 100_u32) == 0_u32
+}
+
+// --- max_u32 ---
+
+test "max_u32: picks larger" {
+    expect max_u32(3_u32, 7_u32) == 7_u32
+}
+
+test "max_u32: picks larger reversed" {
+    expect max_u32(7_u32, 3_u32) == 7_u32
+}
+
+test "max_u32: equal values" {
+    expect max_u32(5_u32, 5_u32) == 5_u32
+}
+
+test "max_u32: zero boundary" {
+    expect max_u32(0_u32, 100_u32) == 100_u32
+}
+
+// --- min/max relationship cross-checks ---
+
+test "min_max: min(a,b) <= max(a,b) when a<b" {
+    expect min_u32(10_u32, 20_u32) == 10_u32
+    expect max_u32(10_u32, 20_u32) == 20_u32
+}
+
+test "min_max: min and max agree on equal inputs" {
+    expect min_u32(42_u32, 42_u32) == max_u32(42_u32, 42_u32)
 }

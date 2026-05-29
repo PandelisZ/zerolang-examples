@@ -94,29 +94,173 @@ fn scan_factor(n: u32, d: u32) -> u32 {
     return scan_factor(n, d + 1)
 }
 
+// --- gcd helper (cast-free, recursive; also unit-tested) ---
+
+pub fn gcd(a: u32, b: u32) -> u32 {
+    if b == 0 {
+        return a
+    }
+    return gcd(b, a % b)
+}
+
+// ---- is_prime tests ----
+
+test "is_prime: 0 is not prime" {
+    expect is_prime(0_u32) == false
+}
+
+test "is_prime: 1 is not prime" {
+    expect is_prime(1_u32) == false
+}
+
 test "is_prime: 2 is prime" {
     expect is_prime(2_u32)
+}
+
+test "is_prime: 3 is prime" {
+    expect is_prime(3_u32)
+}
+
+test "is_prime: 4 is not prime" {
+    expect is_prime(4_u32) == false
+}
+
+test "is_prime: 5 is prime" {
+    expect is_prime(5_u32)
+}
+
+test "is_prime: 7 is prime" {
+    expect is_prime(7_u32)
+}
+
+test "is_prime: 9 is not prime" {
+    expect is_prime(9_u32) == false
+}
+
+test "is_prime: 11 is prime" {
+    expect is_prime(11_u32)
+}
+
+test "is_prime: 13 is prime" {
+    expect is_prime(13_u32)
+}
+
+test "is_prime: 15 is not prime" {
+    expect is_prime(15_u32) == false
+}
+
+test "is_prime: 17 is prime" {
+    expect is_prime(17_u32)
+}
+
+test "is_prime: 25 is not prime" {
+    expect is_prime(25_u32) == false
+}
+
+test "is_prime: 49 is not prime" {
+    expect is_prime(49_u32) == false
 }
 
 test "is_prime: 97 is prime" {
     expect is_prime(97_u32)
 }
 
+test "is_prime: 100 is not prime" {
+    expect is_prime(100_u32) == false
+}
+
+test "is_prime: 101 is prime" {
+    expect is_prime(101_u32)
+}
+
 test "is_prime: 91 is composite" {
     expect is_prime(91_u32) == false
 }
 
-test "is_prime: 0 and 1 are not prime" {
-    if is_prime(0_u32) {
-        expect false
-    }
-    expect is_prime(1_u32) == false
+// ---- smallest_factor tests ----
+
+test "smallest_factor: 0 returns 0" {
+    expect smallest_factor(0_u32) == 0_u32
 }
 
-test "smallest_factor: 91 = 7 * 13" {
+test "smallest_factor: 1 returns 1" {
+    expect smallest_factor(1_u32) == 1_u32
+}
+
+test "smallest_factor: 2 returns 2 (prime)" {
+    expect smallest_factor(2_u32) == 2_u32
+}
+
+test "smallest_factor: 3 returns 3 (prime)" {
+    expect smallest_factor(3_u32) == 3_u32
+}
+
+test "smallest_factor: 4 returns 2 (even)" {
+    expect smallest_factor(4_u32) == 2_u32
+}
+
+test "smallest_factor: 9 returns 3" {
+    expect smallest_factor(9_u32) == 3_u32
+}
+
+test "smallest_factor: 12 returns 2 (even)" {
+    expect smallest_factor(12_u32) == 2_u32
+}
+
+test "smallest_factor: 13 returns 13 (prime)" {
+    expect smallest_factor(13_u32) == 13_u32
+}
+
+test "smallest_factor: 15 returns 3" {
+    expect smallest_factor(15_u32) == 3_u32
+}
+
+test "smallest_factor: 25 returns 5" {
+    expect smallest_factor(25_u32) == 5_u32
+}
+
+test "smallest_factor: 49 returns 7" {
+    expect smallest_factor(49_u32) == 7_u32
+}
+
+test "smallest_factor: 91 = 7 * 13, returns 7" {
     expect smallest_factor(91_u32) == 7_u32
 }
 
-test "smallest_factor: prime returns itself" {
-    expect smallest_factor(13_u32) == 13_u32
+test "smallest_factor: 97 returns 97 (prime)" {
+    expect smallest_factor(97_u32) == 97_u32
+}
+
+test "smallest_factor: 100 returns 2 (even)" {
+    expect smallest_factor(100_u32) == 2_u32
+}
+
+// ---- gcd tests ----
+
+test "gcd: gcd(0, 0) = 0" {
+    expect gcd(0_u32, 0_u32) == 0_u32
+}
+
+test "gcd: gcd(12, 0) = 12" {
+    expect gcd(12_u32, 0_u32) == 12_u32
+}
+
+test "gcd: gcd(0, 7) = 7" {
+    expect gcd(0_u32, 7_u32) == 7_u32
+}
+
+test "gcd: gcd(12, 8) = 4" {
+    expect gcd(12_u32, 8_u32) == 4_u32
+}
+
+test "gcd: gcd(100, 75) = 25" {
+    expect gcd(100_u32, 75_u32) == 25_u32
+}
+
+test "gcd: gcd of two coprimes = 1" {
+    expect gcd(13_u32, 7_u32) == 1_u32
+}
+
+test "gcd: gcd(48, 18) = 6" {
+    expect gcd(48_u32, 18_u32) == 6_u32
 }

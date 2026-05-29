@@ -49,37 +49,232 @@ pub fn apply_op(a: i32, b: i32, op: u8) -> i32 {
     return 0
 }
 
-test "apply_op: add" {
+// ---------------------------------------------------------------------------
+// apply_op tests
+// ---------------------------------------------------------------------------
+
+test "apply_op: add basic" {
     expect apply_op(6, 3, 43_u8) == 9
 }
 
-test "apply_op: subtract goes negative" {
+test "apply_op: add identity (plus zero)" {
+    expect apply_op(5, 0, 43_u8) == 5
+}
+
+test "apply_op: add commutative" {
+    expect apply_op(4, 7, 43_u8) == apply_op(7, 4, 43_u8)
+}
+
+test "apply_op: subtract basic" {
+    expect apply_op(10, 4, 45_u8) == 6
+}
+
+test "apply_op: subtract goes negative (5-8)" {
     expect apply_op(5, 8, 45_u8) == -3
 }
 
-test "apply_op: multiply" {
+test "apply_op: subtract goes negative (3-10)" {
+    expect apply_op(3, 10, 45_u8) == -7
+}
+
+test "apply_op: subtract identity (minus zero)" {
+    expect apply_op(9, 0, 45_u8) == 9
+}
+
+test "apply_op: subtract to zero" {
+    expect apply_op(5, 5, 45_u8) == 0
+}
+
+test "apply_op: multiply basic" {
     expect apply_op(6, 3, 42_u8) == 18
 }
 
-test "apply_op: integer divide" {
-    expect apply_op(7, 3, 47_u8) == 2
+test "apply_op: multiply by zero" {
+    expect apply_op(99, 0, 42_u8) == 0
 }
 
-test "apply_op: modulo" {
-    expect apply_op(7, 3, 37_u8) == 1
+test "apply_op: multiply identity (times one)" {
+    expect apply_op(7, 1, 42_u8) == 7
 }
 
-test "apply_op: divide by zero is zero" {
+test "apply_op: multiply negative result" {
+    expect apply_op(-4, 3, 42_u8) == -12
+}
+
+test "apply_op: integer divide truncates (7/2=3)" {
+    expect apply_op(7, 2, 47_u8) == 3
+}
+
+test "apply_op: integer divide truncates (9/4=2)" {
+    expect apply_op(9, 4, 47_u8) == 2
+}
+
+test "apply_op: integer divide exact" {
+    expect apply_op(12, 3, 47_u8) == 4
+}
+
+test "apply_op: integer divide identity (n/1=n)" {
+    expect apply_op(8, 1, 47_u8) == 8
+}
+
+test "apply_op: divide by zero yields 0" {
     expect apply_op(7, 0, 47_u8) == 0
 }
 
-test "precedence: times beats plus" {
+test "apply_op: modulo basic (7%3=1)" {
+    expect apply_op(7, 3, 37_u8) == 1
+}
+
+test "apply_op: modulo basic (10%3=1)" {
+    expect apply_op(10, 3, 37_u8) == 1
+}
+
+test "apply_op: modulo zero remainder (9%3=0)" {
+    expect apply_op(9, 3, 37_u8) == 0
+}
+
+test "apply_op: modulo zero remainder (8%4=0)" {
+    expect apply_op(8, 4, 37_u8) == 0
+}
+
+test "apply_op: modulo by zero yields 0" {
+    expect apply_op(10, 0, 37_u8) == 0
+}
+
+test "apply_op: unknown op byte yields 0" {
+    expect apply_op(5, 3, 99_u8) == 0
+}
+
+test "apply_op: open paren op byte yields 0" {
+    expect apply_op(5, 3, 40_u8) == 0
+}
+
+test "apply_op: close paren op byte yields 0" {
+    expect apply_op(5, 3, 41_u8) == 0
+}
+
+// ---------------------------------------------------------------------------
+// precedence tests
+// ---------------------------------------------------------------------------
+
+test "precedence: multiply returns 2" {
+    expect precedence(42_u8) == 2
+}
+
+test "precedence: divide returns 2" {
+    expect precedence(47_u8) == 2
+}
+
+test "precedence: modulo returns 2" {
+    expect precedence(37_u8) == 2
+}
+
+test "precedence: plus returns 1" {
+    expect precedence(43_u8) == 1
+}
+
+test "precedence: minus returns 1" {
+    expect precedence(45_u8) == 1
+}
+
+test "precedence: open paren returns 0" {
+    expect precedence(40_u8) == 0
+}
+
+test "precedence: close paren returns 0" {
+    expect precedence(41_u8) == 0
+}
+
+test "precedence: unknown byte returns 0" {
+    expect precedence(65_u8) == 0
+}
+
+test "precedence: multiply beats plus (relational)" {
     expect precedence(42_u8) > precedence(43_u8)
 }
 
-test "is_operator: plus yes, paren no" {
+test "precedence: divide beats minus (relational)" {
+    expect precedence(47_u8) > precedence(45_u8)
+}
+
+test "precedence: modulo beats plus (relational)" {
+    expect precedence(37_u8) > precedence(43_u8)
+}
+
+test "precedence: multiply equals divide" {
+    expect precedence(42_u8) == precedence(47_u8)
+}
+
+test "precedence: plus equals minus" {
+    expect precedence(43_u8) == precedence(45_u8)
+}
+
+test "precedence: plus beats open paren (relational)" {
+    expect precedence(43_u8) > precedence(40_u8)
+}
+
+// ---------------------------------------------------------------------------
+// is_operator tests
+// ---------------------------------------------------------------------------
+
+test "is_operator: plus is operator" {
+    expect is_operator(43_u8)
+}
+
+test "is_operator: minus is operator" {
+    expect is_operator(45_u8)
+}
+
+test "is_operator: multiply is operator" {
+    expect is_operator(42_u8)
+}
+
+test "is_operator: divide is operator" {
+    expect is_operator(47_u8)
+}
+
+test "is_operator: modulo is operator" {
+    expect is_operator(37_u8)
+}
+
+test "is_operator: open paren is not operator" {
     if is_operator(40_u8) {
         expect false
     }
-    expect is_operator(43_u8)
+    expect true
+}
+
+test "is_operator: close paren is not operator" {
+    if is_operator(41_u8) {
+        expect false
+    }
+    expect true
+}
+
+test "is_operator: digit '0' is not operator" {
+    if is_operator(48_u8) {
+        expect false
+    }
+    expect true
+}
+
+test "is_operator: digit '9' is not operator" {
+    if is_operator(57_u8) {
+        expect false
+    }
+    expect true
+}
+
+test "is_operator: letter 'A' is not operator" {
+    if is_operator(65_u8) {
+        expect false
+    }
+    expect true
+}
+
+test "is_operator: letter 'z' is not operator" {
+    if is_operator(122_u8) {
+        expect false
+    }
+    expect true
 }

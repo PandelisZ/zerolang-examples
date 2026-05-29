@@ -48,14 +48,54 @@ pub fn count_words(s: Span<u8>) -> u32 {
     return words
 }
 
-test "is_space: space" {
+// --- is_space tests ---
+
+// TRUE cases: all five recognised whitespace characters.
+test "is_space: space (32)" {
     expect is_space(32_u8)
 }
 
-test "is_space: tab" {
+test "is_space: tab (9)" {
     expect is_space(9_u8)
 }
 
-test "is_space: letter is not space" {
+test "is_space: newline (10)" {
+    expect is_space(10_u8)
+}
+
+test "is_space: carriage return (13)" {
+    expect is_space(13_u8)
+}
+
+test "is_space: form feed (12)" {
+    expect is_space(12_u8)
+}
+
+// FALSE cases: letters, digits, punctuation, null, near-misses.
+test "is_space: uppercase letter A (65) is not space" {
     expect is_space(65_u8) == false
+}
+
+test "is_space: lowercase letter a (97) is not space" {
+    expect is_space(97_u8) == false
+}
+
+test "is_space: digit 0 (48) is not space" {
+    expect is_space(48_u8) == false
+}
+
+test "is_space: comma (44) is not space" {
+    expect is_space(44_u8) == false
+}
+
+test "is_space: null (0) is not space" {
+    expect is_space(0_u8) == false
+}
+
+test "is_space: vertical tab near-miss (11) is not space" {
+    expect is_space(11_u8) == false
+}
+
+test "is_space: near-miss 14 is not space" {
+    expect is_space(14_u8) == false
 }

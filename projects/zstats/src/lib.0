@@ -82,22 +82,177 @@ pub fn cmp_u32(a: u32, b: u32) -> i32 {
     return 0
 }
 
-test "min2 picks smaller" {
+// Recursive helper: sum of integers 0..n (i.e. 0+1+...+n).
+pub fn sum_to(n: u32) -> u32 {
+    if n == 0 {
+        return 0
+    }
+    return n + sum_to(n - 1)
+}
+
+// --- min2 tests ---
+
+test "min2 a<b returns a" {
+    expect min2(3_u32, 9_u32) == 3_u32
+}
+
+test "min2 a>b returns b" {
     expect min2(9_u32, 3_u32) == 3_u32
 }
 
-test "max2 picks larger" {
+test "min2 equal returns same" {
+    expect min2(5_u32, 5_u32) == 5_u32
+}
+
+test "min2 with zero left" {
+    expect min2(0_u32, 100_u32) == 0_u32
+}
+
+test "min2 with zero right" {
+    expect min2(100_u32, 0_u32) == 0_u32
+}
+
+test "min2 both zero" {
+    expect min2(0_u32, 0_u32) == 0_u32
+}
+
+test "min2 large values" {
+    expect min2(1000000_u32, 999999_u32) == 999999_u32
+}
+
+// --- max2 tests ---
+
+test "max2 a<b returns b" {
+    expect max2(3_u32, 9_u32) == 9_u32
+}
+
+test "max2 a>b returns a" {
     expect max2(9_u32, 3_u32) == 9_u32
 }
 
-test "mean_floor floors" {
+test "max2 equal returns same" {
+    expect max2(5_u32, 5_u32) == 5_u32
+}
+
+test "max2 with zero left" {
+    expect max2(0_u32, 100_u32) == 100_u32
+}
+
+test "max2 with zero right" {
+    expect max2(100_u32, 0_u32) == 100_u32
+}
+
+test "max2 both zero" {
+    expect max2(0_u32, 0_u32) == 0_u32
+}
+
+test "max2 large values" {
+    expect max2(1000000_u32, 999999_u32) == 1000000_u32
+}
+
+// Consistency: min2(a,b) + max2(a,b) == a + b
+test "min2 max2 consistency a<b" {
+    expect min2(4_u32, 7_u32) + max2(4_u32, 7_u32) == 4_u32 + 7_u32
+}
+
+test "min2 max2 consistency a>b" {
+    expect min2(10_u32, 3_u32) + max2(10_u32, 3_u32) == 10_u32 + 3_u32
+}
+
+test "min2 max2 consistency equal" {
+    expect min2(6_u32, 6_u32) + max2(6_u32, 6_u32) == 6_u32 + 6_u32
+}
+
+// --- mean_floor tests ---
+
+test "mean_floor exact division" {
+    expect mean_floor(10_u32, 2_u32) == 5_u32
+}
+
+test "mean_floor floors 7/2" {
     expect mean_floor(7_u32, 2_u32) == 3_u32
 }
 
-test "mean_floor of empty is zero" {
+test "mean_floor floors 100/3" {
+    expect mean_floor(100_u32, 3_u32) == 33_u32
+}
+
+test "mean_floor count zero returns zero" {
     expect mean_floor(0_u32, 0_u32) == 0_u32
 }
 
-test "cmp_u32 equal" {
+test "mean_floor nonzero sum count zero returns zero" {
+    expect mean_floor(99_u32, 0_u32) == 0_u32
+}
+
+test "mean_floor single value" {
+    expect mean_floor(5_u32, 1_u32) == 5_u32
+}
+
+test "mean_floor sum zero" {
+    expect mean_floor(0_u32, 4_u32) == 0_u32
+}
+
+test "mean_floor large sum exact" {
+    expect mean_floor(1000_u32, 10_u32) == 100_u32
+}
+
+// --- cmp_u32 tests ---
+
+test "cmp_u32 a<b returns -1" {
+    expect cmp_u32(1_u32, 2_u32) == -1
+}
+
+test "cmp_u32 a>b returns 1" {
+    expect cmp_u32(2_u32, 1_u32) == 1
+}
+
+test "cmp_u32 equal returns 0" {
     expect cmp_u32(4_u32, 4_u32) == 0
+}
+
+test "cmp_u32 zero equal" {
+    expect cmp_u32(0_u32, 0_u32) == 0
+}
+
+test "cmp_u32 zero vs nonzero" {
+    expect cmp_u32(0_u32, 1_u32) == -1
+}
+
+test "cmp_u32 nonzero vs zero" {
+    expect cmp_u32(1_u32, 0_u32) == 1
+}
+
+test "cmp_u32 large less than" {
+    expect cmp_u32(999998_u32, 999999_u32) == -1
+}
+
+test "cmp_u32 large greater than" {
+    expect cmp_u32(999999_u32, 999998_u32) == 1
+}
+
+test "cmp_u32 large equal" {
+    expect cmp_u32(1000000_u32, 1000000_u32) == 0
+}
+
+// --- sum_to tests ---
+
+test "sum_to 0 is 0" {
+    expect sum_to(0_u32) == 0_u32
+}
+
+test "sum_to 1 is 1" {
+    expect sum_to(1_u32) == 1_u32
+}
+
+test "sum_to 4 is 10" {
+    expect sum_to(4_u32) == 10_u32
+}
+
+test "sum_to 10 is 55" {
+    expect sum_to(10_u32) == 55_u32
+}
+
+test "sum_to matches mean_floor identity" {
+    expect mean_floor(sum_to(4_u32), 2_u32) == 5_u32
 }
