@@ -1,0 +1,185 @@
+// zcalc - evaluate an integer arithmetic expression.
+//
+// A small relative of `bc`/`expr`. All arguments are joined with spaces into
+// one expression, tokenized, and evaluated with the shunting-yard algorithm.
+// Supports + - * / % and parentheses with normal precedence; operands are
+// non-negative integers but results may be negative.
+//
+//   zcalc 3 + 4 '*' 2          -> 11
+//   zcalc '(3 + 4) * 2'        -> 14
+//   zcalc 100 / 7              -> 14
+use lib
+
+pub fn main(world: World) -> Void raises {
+    let argc: usize = std.args.len()
+    if argc < 2 {
+        check world.err.write("usage: zcalc <expression>\n")
+        return
+    }
+
+    // Join all argv tokens into one buffer separated by spaces.
+    var src: [512]u8 = [0; 512]
+    var slen: usize = 0
+    var ai: usize = 1
+    while ai < argc {
+        let a: Maybe<String> = std.args.get(ai)
+        if a.has {
+            let s: Span<u8> = std.mem.span(a.value)
+            let n: usize = std.mem.len(s)
+            var j: usize = 0
+            while j < n && slen < 512 {
+                src[slen] = s[j]
+                slen = slen + 1
+                j = j + 1
+            }
+        }
+        if slen < 512 {
+            src[slen] = 32
+            slen = slen + 1
+        }
+        ai = ai + 1
+    }
+
+    // Tokenize into parallel arrays: kind 0=number, 1=operator, 2='(', 3=')'.
+    var tkind: [256]u8 = [0; 256]
+    var tnum: [256]i32 = [0; 256]
+    var top: [256]u8 = [0; 256]
+    var tn: usize = 0
+    var bad: Bool = false
+    var i: usize = 0
+    while i < slen && bad == false && tn < 256 {
+        let c: u8 = src[i]
+        if c == 32 || c == 9 {
+            i = i + 1
+        } else if c >= 48 && c <= 57 {
+            var v: i32 = 0
+            while i < slen && src[i] >= 48 && src[i] <= 57 {
+                v = v * 10 + ((src[i] - 48) as i32)
+                i = i + 1
+            }
+            tkind[tn] = 0
+            tnum[tn] = v
+            tn = tn + 1
+        } else if c == 40 {
+            tkind[tn] = 2
+            tn = tn + 1
+            i = i + 1
+        } else if c == 41 {
+            tkind[tn] = 3
+            tn = tn + 1
+            i = i + 1
+        } else if is_operator(c) {
+            tkind[tn] = 1
+            top[tn] = c
+            tn = tn + 1
+            i = i + 1
+        } else {
+            bad = true
+        }
+    }
+
+    if bad {
+        check world.err.write("zcalc: invalid character in expression\n")
+        return
+    }
+
+    // Shunting-yard evaluation with a value stack and an operator stack.
+    var vals: [256]i32 = [0; 256]
+    var vtop: usize = 0
+    var ops: [256]u8 = [0; 256]
+    var otop: usize = 0
+    var failed: Bool = false
+
+    var t: usize = 0
+    while t < tn && failed == false {
+        let kind: u8 = tkind[t]
+        if kind == 0 {
+            vals[vtop] = tnum[t]
+            vtop = vtop + 1
+        } else if kind == 1 {
+            let op: u8 = top[t]
+            while otop > 0 && ops[otop - 1] != 40 && precedence(ops[otop - 1]) >= precedence(op) {
+                if vtop < 2 {
+                    failed = true
+                    otop = 0
+                } else {
+                    let rhs: i32 = vals[vtop - 1]
+                    let lhs: i32 = vals[vtop - 2]
+                    vtop = vtop - 2
+                    vals[vtop] = apply_op(lhs, rhs, ops[otop - 1])
+                    vtop = vtop + 1
+                    otop = otop - 1
+                }
+            }
+            ops[otop] = op
+            otop = otop + 1
+        } else if kind == 2 {
+            ops[otop] = 40
+            otop = otop + 1
+        } else {
+            // ')': apply until the matching '('.
+            while otop > 0 && ops[otop - 1] != 40 {
+                if vtop < 2 {
+                    failed = true
+                    otop = 0
+                } else {
+                    let rhs: i32 = vals[vtop - 1]
+                    let lhs: i32 = vals[vtop - 2]
+                    vtop = vtop - 2
+                    vals[vtop] = apply_op(lhs, rhs, ops[otop - 1])
+                    vtop = vtop + 1
+                    otop = otop - 1
+                }
+            }
+            if otop > 0 {
+                otop = otop - 1
+            }
+        }
+        t = t + 1
+    }
+
+    // Drain remaining operators.
+    while otop > 0 && failed == false {
+        if vtop < 2 {
+            failed = true
+        } else {
+            let rhs: i32 = vals[vtop - 1]
+            let lhs: i32 = vals[vtop - 2]
+            vtop = vtop - 2
+            vals[vtop] = apply_op(lhs, rhs, ops[otop - 1])
+            vtop = vtop + 1
+            otop = otop - 1
+        }
+    }
+
+    if failed || vtop != 1 {
+        check world.err.write("zcalc: malformed expression\n")
+        return
+    }
+
+    // Print the (possibly negative) result.
+    var result: i32 = vals[0]
+    var out: [24]u8 = [0; 24]
+    if result < 0 {
+        check world.out.write("-")
+        result = 0 - result
+    }
+    if result == 0 {
+        check world.out.write("0")
+    } else {
+        var tmp: [24]u8 = [0; 24]
+        var cnt: usize = 0
+        while result > 0 {
+            tmp[cnt] = 48 + ((result % 10) as u8)
+            result = result / 10
+            cnt = cnt + 1
+        }
+        var w: usize = 0
+        while w < cnt {
+            out[w] = tmp[cnt - 1 - w]
+            w = w + 1
+        }
+        check world.out.write(out[0..cnt])
+    }
+    check world.out.write("\n")
+}

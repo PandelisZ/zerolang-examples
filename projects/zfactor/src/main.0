@@ -1,0 +1,54 @@
+// zfactor - print the prime factorization of each numeric argument.
+//
+// Modeled on coreutils `factor`. Reads numbers from argv (this zerolang
+// backend has no stdin/file runtime yet) and prints "n: p1 p2 p3" with each
+// prime factor listed once per occurrence.
+//
+//   zfactor 12 97 360
+//   12: 2 2 3
+//   97: 97
+//   360: 2 2 2 3 3 5
+//
+// Note: this backend cannot pass `World` to a helper function, so every write
+// happens inline in `main`. Pure helpers (fmt_u32, smallest_factor, ...) live
+// in lib.0 and are unit-tested there.
+use lib
+
+pub fn main(world: World) -> Void raises {
+    let argc: usize = std.args.len()
+    if argc < 2 {
+        check world.err.write("usage: zfactor <number>...\n")
+        return
+    }
+    var i: usize = 1
+    while i < argc {
+        let arg: Maybe<String> = std.args.get(i)
+        if arg.has {
+            let s: Span<u8> = std.mem.span(arg.value)
+            if is_all_digits(s) {
+                let value: u32 = parse_u32(s)
+                var head: [10]u8 = [0; 10]
+                check world.out.write(fmt_u32(head, value))
+                check world.out.write(":")
+                if value < 2 {
+                    check world.out.write("\n")
+                } else {
+                    var n: u32 = value
+                    while n > 1 {
+                        let f: u32 = smallest_factor(n)
+                        var fbuf: [10]u8 = [0; 10]
+                        check world.out.write(" ")
+                        check world.out.write(fmt_u32(fbuf, f))
+                        n = n / f
+                    }
+                    check world.out.write("\n")
+                }
+            } else {
+                check world.err.write("zfactor: not a number: ")
+                check world.err.write(arg.value)
+                check world.err.write("\n")
+            }
+        }
+        i = i + 1
+    }
+}

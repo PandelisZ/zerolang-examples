@@ -1,0 +1,70 @@
+// zuniq - collapse adjacent duplicate argument "lines".
+//
+// Modeled on coreutils `uniq` (which also only looks at adjacent lines).
+//
+//   zuniq [-c] [-d] <line>...
+//     -c  prefix each output line with its run count
+//     -d  only print lines that were duplicated
+//
+//   zuniq -c a a b c c c
+//   2 a
+//   1 b
+//   3 c
+use lib
+
+pub fn main(world: World) -> Void raises {
+    let argc: usize = std.args.len()
+    var count_mode: Bool = false
+    var dups_only: Bool = false
+
+    var pi: usize = 1
+    var scanning: Bool = true
+    while scanning && pi < argc {
+        let a: Maybe<String> = std.args.get(pi)
+        if a.has == false {
+            scanning = false
+        } else {
+            let s: Span<u8> = std.mem.span(a.value)
+            let len: usize = std.mem.len(s)
+            if len < 2 || s[0] != 45 {
+                scanning = false
+            } else {
+                var k: usize = 1
+                while k < len {
+                    let f: u8 = s[k]
+                    if f == 99 {
+                        count_mode = true
+                    } else if f == 100 {
+                        dups_only = true
+                    }
+                    k = k + 1
+                }
+                pi = pi + 1
+            }
+        }
+    }
+
+    var idx: usize = pi
+    while idx < argc {
+        // Measure the run of identical lines starting at idx.
+        var run: u32 = 1
+        while idx + (run as usize) < argc && line_eq(idx, idx + (run as usize)) {
+            run = run + 1
+        }
+
+        let show: Bool = dups_only == false || is_dup_count(run)
+        if show {
+            let line: Maybe<String> = std.args.get(idx)
+            if line.has {
+                if count_mode {
+                    var cbuf: [10]u8 = [0; 10]
+                    check world.out.write(fmt_u32(cbuf, run))
+                    check world.out.write(" ")
+                }
+                check world.out.write(line.value)
+                check world.out.write("\n")
+            }
+        }
+        idx = idx + (run as usize)
+    }
+}

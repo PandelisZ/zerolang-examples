@@ -1,0 +1,49 @@
+// zbase - convert an integer between numeric bases (2..16).
+//
+// A small relative of `printf %x` / `bc`'s obase/ibase.
+//
+//   zbase <number> <from-base> <to-base>
+//
+//   zbase ff 16 2     -> 11111111
+//   zbase 1010 2 10   -> 10
+//   zbase 255 10 16   -> ff
+use lib
+
+pub fn main(world: World) -> Void raises {
+    let argc: usize = std.args.len()
+    if argc < 4 {
+        check world.err.write("usage: zbase <number> <from-base> <to-base>\n")
+        return
+    }
+
+    let num_arg: Maybe<String> = std.args.get(1)
+    let from_arg: Maybe<String> = std.args.get(2)
+    let to_arg: Maybe<String> = std.args.get(3)
+    if num_arg.has == false || from_arg.has == false || to_arg.has == false {
+        return
+    }
+
+    let from_s: Span<u8> = std.mem.span(from_arg.value)
+    let to_s: Span<u8> = std.mem.span(to_arg.value)
+    if is_all_digits(from_s) == false || is_all_digits(to_s) == false {
+        check world.err.write("zbase: bases must be decimal numbers\n")
+        return
+    }
+    let from_base: u32 = parse_u32(from_s)
+    let to_base: u32 = parse_u32(to_s)
+    if from_base < 2 || from_base > 16 || to_base < 2 || to_base > 16 {
+        check world.err.write("zbase: bases must be between 2 and 16\n")
+        return
+    }
+
+    let num_s: Span<u8> = std.mem.span(num_arg.value)
+    if valid_in_base(num_s, from_base) == false {
+        check world.err.write("zbase: digit out of range for source base\n")
+        return
+    }
+
+    let value: u32 = parse_in_base(num_s, from_base)
+    var out: [32]u8 = [0; 32]
+    check world.out.write(format_in_base(out, value, to_base))
+    check world.out.write("\n")
+}

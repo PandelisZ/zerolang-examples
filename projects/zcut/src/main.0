@@ -1,0 +1,83 @@
+// zcut - select one delimited field from each argument "line".
+//
+// Modeled on coreutils `cut -d -f`. Each argument is one line; the delimiter
+// is a single byte (default ','). Fields are 1-based. If the field is absent
+// an empty line is printed.
+//
+//   zcut -d : -f 2 root:x:0:0 daemon:x:1:1
+//   x
+//   x
+//
+//   zcut -f 3 a,b,c,d
+//   c
+use lib
+
+pub fn main(world: World) -> Void raises {
+    let argc: usize = std.args.len()
+    var delim: u8 = 44
+    var field: u32 = 1
+
+    // Parse "-d <char>" and "-f <n>" option pairs.
+    var pi: usize = 1
+    var scanning: Bool = true
+    while scanning && pi < argc {
+        let a: Maybe<String> = std.args.get(pi)
+        if a.has == false {
+            scanning = false
+        } else if std.mem.eql(a.value, "-d") && pi + 1 < argc {
+            let d: Maybe<String> = std.args.get(pi + 1)
+            if d.has {
+                let ds: Span<u8> = std.mem.span(d.value)
+                if std.mem.len(ds) > 0 {
+                    delim = ds[0]
+                }
+            }
+            pi = pi + 2
+        } else if std.mem.eql(a.value, "-f") && pi + 1 < argc {
+            let f: Maybe<String> = std.args.get(pi + 1)
+            if f.has {
+                let fs: Span<u8> = std.mem.span(f.value)
+                if is_all_digits(fs) {
+                    field = at_least_one(parse_u32(fs))
+                }
+            }
+            pi = pi + 2
+        } else {
+            scanning = false
+        }
+    }
+
+    if pi >= argc {
+        check world.err.write("usage: zcut -d <char> -f <n> <line>...\n")
+        return
+    }
+
+    var idx: usize = pi
+    while idx < argc {
+        let line: Maybe<String> = std.args.get(idx)
+        if line.has {
+            let text: Span<u8> = std.mem.span(line.value)
+            let n: usize = std.mem.len(text)
+            var fnum: u32 = 1
+            var start: usize = 0
+            var i: usize = 0
+            var done: Bool = false
+            while i < n && done == false {
+                if text[i] == delim {
+                    if fnum == field {
+                        check world.out.write(text[start..i])
+                        done = true
+                    }
+                    fnum = fnum + 1
+                    start = i + 1
+                }
+                i = i + 1
+            }
+            if done == false && fnum == field {
+                check world.out.write(text[start..n])
+            }
+            check world.out.write("\n")
+        }
+        idx = idx + 1
+    }
+}

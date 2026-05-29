@@ -1,0 +1,138 @@
+// zbase core logic.
+
+// --- pure, unit-tested numeric helpers ---
+
+// Value of an ASCII digit in bases up to 16; returns 99 for invalid bytes.
+pub fn digit_val(c: u8) -> u32 {
+    if c >= 48 && c <= 57 {
+        return (c - 48) as u32
+    }
+    if c >= 97 && c <= 102 {
+        return ((c - 97) as u32) + 10
+    }
+    if c >= 65 && c <= 70 {
+        return ((c - 65) as u32) + 10
+    }
+    return 99
+}
+
+// ASCII character for a digit value 0..15 (lowercase for 10..15).
+pub fn digit_char(v: u32) -> u8 {
+    if v < 10 {
+        return 48 + (v as u8)
+    }
+    return 97 + ((v - 10) as u8)
+}
+
+pub fn pow_u32(base: u32, exp: u32) -> u32 {
+    if exp == 0 {
+        return 1
+    }
+    return base * pow_u32(base, exp - 1)
+}
+
+// Number of digits needed to write `value` in `base` (cast-free, recursive).
+pub fn count_digits_in_base(value: u32, base: u32) -> u32 {
+    if value < base {
+        return 1
+    }
+    return 1 + count_digits_in_base(value / base, base)
+}
+
+// The tests below avoid `as` casts and span indexing, the two things the
+// 0.2.0 test interpreter cannot evaluate. digit_val / digit_char / parse /
+// format are exercised end-to-end by `zero run` instead.
+test "pow_u32: 2^10 = 1024" {
+    expect pow_u32(2_u32, 10_u32) == 1024_u32
+}
+
+test "pow_u32: anything^0 = 1" {
+    expect pow_u32(7_u32, 0_u32) == 1_u32
+}
+
+test "count_digits: 255 in base 16 needs 2" {
+    expect count_digits_in_base(255_u32, 16_u32) == 2_u32
+}
+
+test "count_digits: 255 in base 2 needs 8" {
+    expect count_digits_in_base(255_u32, 2_u32) == 8_u32
+}
+
+// --- span helpers (while-based; check/run validated) ---
+
+pub fn is_all_digits(s: Span<u8>) -> Bool {
+    let n: usize = std.mem.len(s)
+    if n == 0 {
+        return false
+    }
+    var i: usize = 0
+    while i < n {
+        let c: u8 = s[i]
+        if c < 48 || c > 57 {
+            return false
+        }
+        i = i + 1
+    }
+    return true
+}
+
+pub fn parse_u32(s: Span<u8>) -> u32 {
+    let n: usize = std.mem.len(s)
+    var i: usize = 0
+    var acc: u32 = 0
+    while i < n {
+        acc = acc * 10 + ((s[i] - 48) as u32)
+        i = i + 1
+    }
+    return acc
+}
+
+// True when every byte of `s` is a valid digit strictly below `base`.
+pub fn valid_in_base(s: Span<u8>, base: u32) -> Bool {
+    let n: usize = std.mem.len(s)
+    if n == 0 {
+        return false
+    }
+    var i: usize = 0
+    while i < n {
+        let v: u32 = digit_val(s[i])
+        if v >= base {
+            return false
+        }
+        i = i + 1
+    }
+    return true
+}
+
+pub fn parse_in_base(s: Span<u8>, base: u32) -> u32 {
+    let n: usize = std.mem.len(s)
+    var i: usize = 0
+    var acc: u32 = 0
+    while i < n {
+        acc = acc * base + digit_val(s[i])
+        i = i + 1
+    }
+    return acc
+}
+
+// Format `value` in `base` into `buf`, returning the written slice.
+pub fn format_in_base(buf: MutSpan<u8>, value: u32, base: u32) -> Span<u8> {
+    if value == 0 {
+        buf[0] = 48
+        return buf[0..1]
+    }
+    var n: u32 = value
+    var tmp: [32]u8 = [0; 32]
+    var count: usize = 0
+    while n > 0 {
+        tmp[count] = digit_char(n % base)
+        n = n / base
+        count = count + 1
+    }
+    var i: usize = 0
+    while i < count {
+        buf[i] = tmp[count - 1 - i]
+        i = i + 1
+    }
+    return buf[0..count]
+}

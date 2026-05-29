@@ -1,0 +1,87 @@
+// zstats - summary statistics over numeric arguments.
+//
+// A small relative of `datamash` / `st`. Reads up to 256 non-negative
+// integers from argv and reports count, sum, min, max, mean (floor), and
+// median (lower median for an even count).
+//
+//   zstats 4 8 15 16 23 42
+//   count: 6
+//   sum: 108
+//   min: 4
+//   max: 42
+//   mean: 18
+//   median: 16
+use lib
+
+pub fn main(world: World) -> Void raises {
+    let argc: usize = std.args.len()
+
+    var vals: [256]u32 = [0; 256]
+    var m: usize = 0
+    var sum: u32 = 0
+    var lo: u32 = 0
+    var hi: u32 = 0
+
+    var idx: usize = 1
+    while idx < argc && m < 256 {
+        let a: Maybe<String> = std.args.get(idx)
+        if a.has {
+            let s: Span<u8> = std.mem.span(a.value)
+            if is_all_digits(s) {
+                let v: u32 = parse_u32(s)
+                vals[m] = v
+                if m == 0 {
+                    lo = v
+                    hi = v
+                } else {
+                    lo = min2(lo, v)
+                    hi = max2(hi, v)
+                }
+                sum = sum + v
+                m = m + 1
+            } else {
+                check world.err.write("zstats: skipping non-number: ")
+                check world.err.write(a.value)
+                check world.err.write("\n")
+            }
+        }
+        idx = idx + 1
+    }
+
+    if m == 0 {
+        check world.err.write("usage: zstats <number>...\n")
+        return
+    }
+
+    // Sort a copy for the median.
+    var pos: usize = 1
+    while pos < m {
+        let key: u32 = vals[pos]
+        var hole: usize = pos
+        while hole > 0 && cmp_u32(vals[hole - 1], key) > 0 {
+            vals[hole] = vals[hole - 1]
+            hole = hole - 1
+        }
+        vals[hole] = key
+        pos = pos + 1
+    }
+    let median: u32 = vals[m / 2]
+
+    let count_u: u32 = m as u32
+    let mean: u32 = mean_floor(sum, count_u)
+
+    var b: [10]u8 = [0; 10]
+    check world.out.write("count: ")
+    check world.out.write(fmt_u32(b, count_u))
+    check world.out.write("\nsum: ")
+    check world.out.write(fmt_u32(b, sum))
+    check world.out.write("\nmin: ")
+    check world.out.write(fmt_u32(b, lo))
+    check world.out.write("\nmax: ")
+    check world.out.write(fmt_u32(b, hi))
+    check world.out.write("\nmean: ")
+    check world.out.write(fmt_u32(b, mean))
+    check world.out.write("\nmedian: ")
+    check world.out.write(fmt_u32(b, median))
+    check world.out.write("\n")
+}

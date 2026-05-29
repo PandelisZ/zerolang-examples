@@ -1,0 +1,61 @@
+// zwc core logic.
+
+// Shared decimal formatter (see corpus README).
+pub fn fmt_u32(buf: MutSpan<u8>, value: u32) -> Span<u8> {
+    if value == 0 {
+        buf[0] = 48
+        return buf[0..1]
+    }
+    var n: u32 = value
+    var tmp: [10]u8 = [0; 10]
+    var count: usize = 0
+    while n > 0 {
+        tmp[count] = 48 + ((n % 10) as u8)
+        n = n / 10
+        count = count + 1
+    }
+    var i: usize = 0
+    while i < count {
+        buf[i] = tmp[count - 1 - i]
+        i = i + 1
+    }
+    return buf[0..count]
+}
+
+// ASCII whitespace test (space, tab, newline, carriage return, form feed).
+pub fn is_space(c: u8) -> Bool {
+    return c == 32 || c == 9 || c == 10 || c == 13 || c == 12
+}
+
+// Count whitespace-separated words in a byte span by counting the
+// non-space -> space boundaries.
+pub fn count_words(s: Span<u8>) -> u32 {
+    let n: usize = std.mem.len(s)
+    var i: usize = 0
+    var words: u32 = 0
+    var in_word: Bool = false
+    while i < n {
+        if is_space(s[i]) {
+            in_word = false
+        } else {
+            if in_word == false {
+                words = words + 1
+            }
+            in_word = true
+        }
+        i = i + 1
+    }
+    return words
+}
+
+test "is_space: space" {
+    expect is_space(32_u8)
+}
+
+test "is_space: tab" {
+    expect is_space(9_u8)
+}
+
+test "is_space: letter is not space" {
+    expect is_space(65_u8) == false
+}

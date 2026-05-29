@@ -1,0 +1,96 @@
+// zwc - count lines, words, and bytes across argument "lines".
+//
+// Modeled on coreutils `wc`. Each argument is treated as one input line
+// (this backend has no stdin/file runtime). Prints the selected counts on a
+// single summary line; with no flag it prints "lines words bytes".
+//
+//   zwc [-l] [-w] [-c] <line>...
+//     -l  lines (= number of arguments)
+//     -w  words (whitespace separated, summed over all lines)
+//     -c  bytes (summed over all lines, plus one newline per line)
+//
+//   zwc "hello world" "the quick brown fox"
+//   2 5 33
+use lib
+
+pub fn main(world: World) -> Void raises {
+    let argc: usize = std.args.len()
+    var want_lines: Bool = false
+    var want_words: Bool = false
+    var want_bytes: Bool = false
+
+    var pi: usize = 1
+    var scanning: Bool = true
+    while scanning && pi < argc {
+        let a: Maybe<String> = std.args.get(pi)
+        if a.has == false {
+            scanning = false
+        } else {
+            let s: Span<u8> = std.mem.span(a.value)
+            let len: usize = std.mem.len(s)
+            if len < 2 || s[0] != 45 {
+                scanning = false
+            } else {
+                var k: usize = 1
+                while k < len {
+                    let f: u8 = s[k]
+                    if f == 108 {
+                        want_lines = true
+                    } else if f == 119 {
+                        want_words = true
+                    } else if f == 99 {
+                        want_bytes = true
+                    }
+                    k = k + 1
+                }
+                pi = pi + 1
+            }
+        }
+    }
+
+    // Default: show all three counts.
+    if want_lines == false && want_words == false && want_bytes == false {
+        want_lines = true
+        want_words = true
+        want_bytes = true
+    }
+
+    var lines: u32 = 0
+    var words: u32 = 0
+    var bytes: u32 = 0
+    var idx: usize = pi
+    while idx < argc {
+        let a: Maybe<String> = std.args.get(idx)
+        if a.has {
+            let s: Span<u8> = std.mem.span(a.value)
+            lines = lines + 1
+            words = words + count_words(s)
+            bytes = bytes + (std.mem.len(s) as u32) + 1
+        }
+        idx = idx + 1
+    }
+
+    var first: Bool = true
+    if want_lines {
+        var b: [10]u8 = [0; 10]
+        check world.out.write(fmt_u32(b, lines))
+        first = false
+    }
+    if want_words {
+        if first == false {
+            check world.out.write(" ")
+        }
+        var b: [10]u8 = [0; 10]
+        check world.out.write(fmt_u32(b, words))
+        first = false
+    }
+    if want_bytes {
+        if first == false {
+            check world.out.write(" ")
+        }
+        var b: [10]u8 = [0; 10]
+        check world.out.write(fmt_u32(b, bytes))
+        first = false
+    }
+    check world.out.write("\n")
+}

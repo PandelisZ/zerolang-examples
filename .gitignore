@@ -1,0 +1,5 @@
+# zerolang build + tool artifacts
+.zero/
+*.o
+*.program-graph
+.DS_Store

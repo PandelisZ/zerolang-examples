@@ -1,0 +1,109 @@
+// zsort - sort argument "lines".
+//
+// Modeled on coreutils `sort` (with a touch of `uniq`). Sorts up to 256
+// argument lines using an in-place insertion sort over an index array.
+//
+//   zsort [-r] [-n] [-u] <line>...
+//     -r  reverse the result
+//     -n  numeric sort (pure-decimal lines compare by value)
+//     -u  drop adjacent duplicates after sorting
+//
+//   zsort -n 10 2 33 4
+//   2
+//   4
+//   10
+//   33
+use lib
+
+pub fn main(world: World) -> Void raises {
+    let argc: usize = std.args.len()
+    var reverse: Bool = false
+    var numeric: Bool = false
+    var unique: Bool = false
+
+    var pi: usize = 1
+    var scanning: Bool = true
+    while scanning && pi < argc {
+        let fa: Maybe<String> = std.args.get(pi)
+        if fa.has == false {
+            scanning = false
+        } else {
+            let s: Span<u8> = std.mem.span(fa.value)
+            let len: usize = std.mem.len(s)
+            if len < 2 || s[0] != 45 {
+                scanning = false
+            } else {
+                var k: usize = 1
+                while k < len {
+                    let f: u8 = s[k]
+                    if f == 114 {
+                        reverse = true
+                    } else if f == 110 {
+                        numeric = true
+                    } else if f == 117 {
+                        unique = true
+                    }
+                    k = k + 1
+                }
+                pi = pi + 1
+            }
+        }
+    }
+
+    // Collect argv indices of the lines to sort.
+    var idxs: [256]usize = [0; 256]
+    var m: usize = 0
+    var k: usize = pi
+    while k < argc && m < 256 {
+        idxs[m] = k
+        m = m + 1
+        k = k + 1
+    }
+
+    // Insertion sort (ascending) by line comparison.
+    var pos: usize = 1
+    while pos < m {
+        let key: usize = idxs[pos]
+        var hole: usize = pos
+        while hole > 0 && line_cmp(idxs[hole - 1], key, numeric) > 0 {
+            idxs[hole] = idxs[hole - 1]
+            hole = hole - 1
+        }
+        idxs[hole] = key
+        pos = pos + 1
+    }
+
+    // Drop adjacent duplicates if requested.
+    var outl: [256]usize = [0; 256]
+    var on: usize = 0
+    var t: usize = 0
+    while t < m {
+        if unique == false || t == 0 || line_cmp(idxs[t - 1], idxs[t], numeric) != 0 {
+            outl[on] = idxs[t]
+            on = on + 1
+        }
+        t = t + 1
+    }
+
+    if reverse {
+        var p: usize = on
+        while p > 0 {
+            p = p - 1
+            let line: Maybe<String> = std.args.get(outl[p])
+            if line.has {
+                check world.out.write(line.value)
+                check world.out.write("\n")
+            }
+        }
+    } else {
+        var p: usize = 0
+        while p < on {
+            let line: Maybe<String> = std.args.get(outl[p])
+            if line.has {
+                check world.out.write(line.value)
+                check world.out.write("\n")
+            }
+            p = p + 1
+        }
+    }
+}

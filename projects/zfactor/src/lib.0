@@ -1,0 +1,122 @@
+// zfactor core logic.
+//
+// The numeric helpers below are written recursively so they can be exercised
+// by `zero test` (the 0.2.0 test interpreter supports recursion + if, but not
+// `while` or std.* helpers). The byte/IO helpers use `while` and std.mem; those
+// are validated by `zero check` and `zero run`.
+
+// Decimal formatting: write `value` as ASCII digits into `buf`, return the
+// written slice. This idiom recurs across every tool in the corpus.
+pub fn fmt_u32(buf: MutSpan<u8>, value: u32) -> Span<u8> {
+    if value == 0 {
+        buf[0] = 48
+        return buf[0..1]
+    }
+    var n: u32 = value
+    var tmp: [10]u8 = [0; 10]
+    var count: usize = 0
+    while n > 0 {
+        tmp[count] = 48 + ((n % 10) as u8)
+        n = n / 10
+        count = count + 1
+    }
+    var i: usize = 0
+    while i < count {
+        buf[i] = tmp[count - 1 - i]
+        i = i + 1
+    }
+    return buf[0..count]
+}
+
+// True when every byte of `s` is an ASCII digit and `s` is non-empty.
+pub fn is_all_digits(s: Span<u8>) -> Bool {
+    let n: usize = std.mem.len(s)
+    if n == 0 {
+        return false
+    }
+    var i: usize = 0
+    while i < n {
+        let c: u8 = s[i]
+        if c < 48 || c > 57 {
+            return false
+        }
+        i = i + 1
+    }
+    return true
+}
+
+// Parse a decimal byte span into u32. Caller must check is_all_digits first.
+pub fn parse_u32(s: Span<u8>) -> u32 {
+    let n: usize = std.mem.len(s)
+    var i: usize = 0
+    var acc: u32 = 0
+    while i < n {
+        acc = acc * 10 + ((s[i] - 48) as u32)
+        i = i + 1
+    }
+    return acc
+}
+
+// --- recursive numeric core (unit-tested) ---
+
+pub fn is_prime(n: u32) -> Bool {
+    if n < 2 {
+        return false
+    }
+    return has_no_factor(n, 2_u32)
+}
+
+fn has_no_factor(n: u32, d: u32) -> Bool {
+    if d * d > n {
+        return true
+    }
+    if n % d == 0 {
+        return false
+    }
+    return has_no_factor(n, d + 1)
+}
+
+// Smallest prime factor of n (n itself when n is prime, n when n < 2).
+pub fn smallest_factor(n: u32) -> u32 {
+    if n < 2 {
+        return n
+    }
+    return scan_factor(n, 2_u32)
+}
+
+fn scan_factor(n: u32, d: u32) -> u32 {
+    if d * d > n {
+        return n
+    }
+    if n % d == 0 {
+        return d
+    }
+    return scan_factor(n, d + 1)
+}
+
+test "is_prime: 2 is prime" {
+    expect is_prime(2_u32)
+}
+
+test "is_prime: 97 is prime" {
+    expect is_prime(97_u32)
+}
+
+test "is_prime: 91 is composite" {
+    expect is_prime(91_u32) == false
+}
+
+test "is_prime: 0 and 1 are not prime" {
+    if is_prime(0_u32) {
+        expect false
+    }
+    expect is_prime(1_u32) == false
+}
+
+test "smallest_factor: 91 = 7 * 13" {
+    expect smallest_factor(91_u32) == 7_u32
+}
+
+test "smallest_factor: prime returns itself" {
+    expect smallest_factor(13_u32) == 13_u32
+}

@@ -1,0 +1,65 @@
+// ztr core logic - all pure byte transforms, fully unit-tested.
+
+// Mode codes used by apply_mode.
+//   0 = rot13, 1 = upper, 2 = lower
+pub fn to_upper(c: u8) -> u8 {
+    if c >= 97 && c <= 122 {
+        return c - 32
+    }
+    return c
+}
+
+pub fn to_lower(c: u8) -> u8 {
+    if c >= 65 && c <= 90 {
+        return c + 32
+    }
+    return c
+}
+
+// ROT13: rotate ASCII letters by 13, leave everything else unchanged.
+pub fn rot13_byte(c: u8) -> u8 {
+    if c >= 97 && c <= 122 {
+        return 97 + ((c - 97 + 13) % 26)
+    }
+    if c >= 65 && c <= 90 {
+        return 65 + ((c - 65 + 13) % 26)
+    }
+    return c
+}
+
+pub fn apply_mode(c: u8, mode: u32) -> u8 {
+    if mode == 0 {
+        return rot13_byte(c)
+    }
+    if mode == 1 {
+        return to_upper(c)
+    }
+    if mode == 2 {
+        return to_lower(c)
+    }
+    return c
+}
+
+test "to_upper: a -> A" {
+    expect to_upper(97_u8) == 65_u8
+}
+
+test "to_lower: Z -> z" {
+    expect to_lower(90_u8) == 122_u8
+}
+
+test "rot13: a -> n" {
+    expect rot13_byte(97_u8) == 110_u8
+}
+
+test "rot13: n -> a (wraps)" {
+    expect rot13_byte(110_u8) == 97_u8
+}
+
+test "rot13 is its own inverse" {
+    expect rot13_byte(rot13_byte(88_u8)) == 88_u8
+}
+
+test "apply_mode: punctuation unchanged" {
+    expect apply_mode(46_u8, 0_u32) == 46_u8
+}

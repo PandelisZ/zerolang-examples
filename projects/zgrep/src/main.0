@@ -1,0 +1,101 @@
+// zgrep - print argument "lines" that match a pattern.
+//
+// Modeled on grep/ripgrep. Because this backend has no stdin/file runtime,
+// the lines to search are passed as arguments after the pattern.
+//
+//   zgrep [-i] [-v] [-c] [-n] <pattern> <line>...
+//     -i  case-insensitive match
+//     -v  invert: print non-matching lines
+//     -c  print only the count of matching lines
+//     -n  prefix each printed line with its 1-based index
+//
+//   zgrep -in err "no errors" "Error: disk" "ok"
+//   2:Error: disk
+use lib
+
+pub fn main(world: World) -> Void raises {
+    let argc: usize = std.args.len()
+    var ignore_case: Bool = false
+    var invert: Bool = false
+    var count_only: Bool = false
+    var numbered: Bool = false
+
+    // Parse leading flag arguments ("-i", "-vn", ...). A boolean guard is used
+    // instead of `break`, which this backend does not support at runtime.
+    var pi: usize = 1
+    var scanning: Bool = true
+    while scanning && pi < argc {
+        let a: Maybe<String> = std.args.get(pi)
+        if a.has == false {
+            scanning = false
+        } else {
+            let s: Span<u8> = std.mem.span(a.value)
+            let len: usize = std.mem.len(s)
+            if len < 2 || s[0] != 45 {
+                // not a flag: leave pi pointing at the pattern and stop
+                scanning = false
+            } else {
+                var k: usize = 1
+                while k < len {
+                    let f: u8 = s[k]
+                    if f == 105 {
+                        ignore_case = true
+                    } else if f == 118 {
+                        invert = true
+                    } else if f == 99 {
+                        count_only = true
+                    } else if f == 110 {
+                        numbered = true
+                    }
+                    k = k + 1
+                }
+                pi = pi + 1
+            }
+        }
+    }
+
+    if pi >= argc {
+        check world.err.write("usage: zgrep [-ivcn] <pattern> <line>...\n")
+        return
+    }
+
+    let pat_arg: Maybe<String> = std.args.get(pi)
+    if pat_arg.has == false {
+        return
+    }
+    let pattern: Span<u8> = std.mem.span(pat_arg.value)
+
+    var idx: usize = pi + 1
+    var lineno: u32 = 1
+    var matches: u32 = 0
+    while idx < argc {
+        let line: Maybe<String> = std.args.get(idx)
+        if line.has {
+            let hay: Span<u8> = std.mem.span(line.value)
+            var hit: Bool = contains_sub(hay, pattern, ignore_case)
+            if invert {
+                hit = hit == false
+            }
+            if hit {
+                matches = matches + 1
+                if count_only == false {
+                    if numbered {
+                        var nbuf: [10]u8 = [0; 10]
+                        check world.out.write(fmt_u32(nbuf, lineno))
+                        check world.out.write(":")
+                    }
+                    check world.out.write(line.value)
+                    check world.out.write("\n")
+                }
+            }
+        }
+        lineno = lineno + 1
+        idx = idx + 1
+    }
+
+    if count_only {
+        var cbuf: [10]u8 = [0; 10]
+        check world.out.write(fmt_u32(cbuf, matches))
+        check world.out.write("\n")
+    }
+}

@@ -1,0 +1,68 @@
+// zuniq core logic.
+
+// Shared decimal formatter.
+pub fn fmt_u32(buf: MutSpan<u8>, value: u32) -> Span<u8> {
+    if value == 0 {
+        buf[0] = 48
+        return buf[0..1]
+    }
+    var n: u32 = value
+    var tmp: [10]u8 = [0; 10]
+    var count: usize = 0
+    while n > 0 {
+        tmp[count] = 48 + ((n % 10) as u8)
+        n = n / 10
+        count = count + 1
+    }
+    var i: usize = 0
+    while i < count {
+        buf[i] = tmp[count - 1 - i]
+        i = i + 1
+    }
+    return buf[0..count]
+}
+
+pub fn compare_spans(a: Span<u8>, b: Span<u8>) -> i32 {
+    let la: usize = std.mem.len(a)
+    let lb: usize = std.mem.len(b)
+    var i: usize = 0
+    while i < la && i < lb {
+        if a[i] < b[i] {
+            return -1
+        }
+        if a[i] > b[i] {
+            return 1
+        }
+        i = i + 1
+    }
+    if la < lb {
+        return -1
+    }
+    if la > lb {
+        return 1
+    }
+    return 0
+}
+
+// True when the argv entries at i and j are byte-identical.
+pub fn line_eq(i: usize, j: usize) -> Bool {
+    let a: Maybe<String> = std.args.get(i)
+    let b: Maybe<String> = std.args.get(j)
+    if a.has == false || b.has == false {
+        return false
+    }
+    return compare_spans(std.mem.span(a.value), std.mem.span(b.value)) == 0
+}
+
+// A run length greater than one means the line was duplicated (cast-free).
+pub fn is_dup_count(count: u32) -> Bool {
+    return count > 1
+}
+
+test "is_dup_count: single is unique" {
+    expect is_dup_count(1_u32) == false
+}
+
+test "is_dup_count: repeated is dup" {
+    expect is_dup_count(4_u32)
+}

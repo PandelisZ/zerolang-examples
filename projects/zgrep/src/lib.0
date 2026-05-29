@@ -1,0 +1,90 @@
+// zgrep core logic.
+//
+// Pure char-classification helpers are recursion/branch only, so `zero test`
+// can exercise them. The span-scanning matcher uses `while` + std.mem and is
+// validated by `zero check` / `zero run`.
+
+// Decimal formatting shared across the corpus: write `value` as ASCII digits
+// into `buf`, return the written slice.
+pub fn fmt_u32(buf: MutSpan<u8>, value: u32) -> Span<u8> {
+    if value == 0 {
+        buf[0] = 48
+        return buf[0..1]
+    }
+    var n: u32 = value
+    var tmp: [10]u8 = [0; 10]
+    var count: usize = 0
+    while n > 0 {
+        tmp[count] = 48 + ((n % 10) as u8)
+        n = n / 10
+        count = count + 1
+    }
+    var i: usize = 0
+    while i < count {
+        buf[i] = tmp[count - 1 - i]
+        i = i + 1
+    }
+    return buf[0..count]
+}
+
+// Lowercase an ASCII byte; leave everything else unchanged.
+pub fn to_lower(c: u8) -> u8 {
+    if c >= 65 && c <= 90 {
+        return c + 32
+    }
+    return c
+}
+
+// Compare two bytes, optionally folding ASCII case.
+pub fn byte_eq(a: u8, b: u8, ignore_case: Bool) -> Bool {
+    if ignore_case {
+        return to_lower(a) == to_lower(b)
+    }
+    return a == b
+}
+
+// True when `needle` occurs anywhere in `hay`.
+pub fn contains_sub(hay: Span<u8>, needle: Span<u8>, ignore_case: Bool) -> Bool {
+    let h: usize = std.mem.len(hay)
+    let n: usize = std.mem.len(needle)
+    if n == 0 {
+        return true
+    }
+    if n > h {
+        return false
+    }
+    var start: usize = 0
+    while start + n <= h {
+        var j: usize = 0
+        var ok: Bool = true
+        while j < n {
+            if byte_eq(hay[start + j], needle[j], ignore_case) == false {
+                ok = false
+                j = n
+            } else {
+                j = j + 1
+            }
+        }
+        if ok {
+            return true
+        }
+        start = start + 1
+    }
+    return false
+}
+
+test "to_lower folds uppercase" {
+    expect to_lower(65_u8) == 97_u8
+}
+
+test "to_lower leaves digits" {
+    expect to_lower(53_u8) == 53_u8
+}
+
+test "byte_eq case sensitive" {
+    expect byte_eq(65_u8, 97_u8, false) == false
+}
+
+test "byte_eq case insensitive" {
+    expect byte_eq(65_u8, 97_u8, true)
+}

@@ -1,0 +1,44 @@
+// zcut core logic.
+
+pub fn is_all_digits(s: Span<u8>) -> Bool {
+    let n: usize = std.mem.len(s)
+    if n == 0 {
+        return false
+    }
+    var i: usize = 0
+    while i < n {
+        let c: u8 = s[i]
+        if c < 48 || c > 57 {
+            return false
+        }
+        i = i + 1
+    }
+    return true
+}
+
+pub fn parse_u32(s: Span<u8>) -> u32 {
+    let n: usize = std.mem.len(s)
+    var i: usize = 0
+    var acc: u32 = 0
+    while i < n {
+        acc = acc * 10 + ((s[i] - 48) as u32)
+        i = i + 1
+    }
+    return acc
+}
+
+// Field numbers are 1-based; treat 0 as 1 (cast-free, unit-tested).
+pub fn at_least_one(n: u32) -> u32 {
+    if n == 0 {
+        return 1
+    }
+    return n
+}
+
+test "at_least_one: zero becomes one" {
+    expect at_least_one(0_u32) == 1_u32
+}
+
+test "at_least_one: keeps positive" {
+    expect at_least_one(5_u32) == 5_u32
+}

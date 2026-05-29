@@ -1,0 +1,85 @@
+// zcalc core logic.
+//
+// The evaluator itself (tokenizer + shunting-yard) lives in main.0 because it
+// needs `while` loops and array stacks. The arithmetic kernel below is pure
+// and branch-only, so `zero test` can verify the operator semantics directly.
+
+// Operator byte codes (ASCII):
+//   '+' 43   '-' 45   '*' 42   '/' 47   '%' 37   '(' 40   ')' 41
+
+// Operator precedence: 2 for * / %, 1 for + -, 0 otherwise (e.g. parens).
+pub fn precedence(op: u8) -> u32 {
+    if op == 42 || op == 47 || op == 37 {
+        return 2
+    }
+    if op == 43 || op == 45 {
+        return 1
+    }
+    return 0
+}
+
+pub fn is_operator(op: u8) -> Bool {
+    return op == 43 || op == 45 || op == 42 || op == 47 || op == 37
+}
+
+// Apply a binary operator. Division/modulo by zero yields 0 (the caller
+// reports the error separately).
+pub fn apply_op(a: i32, b: i32, op: u8) -> i32 {
+    if op == 43 {
+        return a + b
+    }
+    if op == 45 {
+        return a - b
+    }
+    if op == 42 {
+        return a * b
+    }
+    if op == 47 {
+        if b == 0 {
+            return 0
+        }
+        return a / b
+    }
+    if op == 37 {
+        if b == 0 {
+            return 0
+        }
+        return a % b
+    }
+    return 0
+}
+
+test "apply_op: add" {
+    expect apply_op(6, 3, 43_u8) == 9
+}
+
+test "apply_op: subtract goes negative" {
+    expect apply_op(5, 8, 45_u8) == -3
+}
+
+test "apply_op: multiply" {
+    expect apply_op(6, 3, 42_u8) == 18
+}
+
+test "apply_op: integer divide" {
+    expect apply_op(7, 3, 47_u8) == 2
+}
+
+test "apply_op: modulo" {
+    expect apply_op(7, 3, 37_u8) == 1
+}
+
+test "apply_op: divide by zero is zero" {
+    expect apply_op(7, 0, 47_u8) == 0
+}
+
+test "precedence: times beats plus" {
+    expect precedence(42_u8) > precedence(43_u8)
+}
+
+test "is_operator: plus yes, paren no" {
+    if is_operator(40_u8) {
+        expect false
+    }
+    expect is_operator(43_u8)
+}
